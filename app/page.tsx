@@ -1,7 +1,15 @@
-import { ArrowRight, Home, TrendingUp, Shield, CheckCircle, Users, BarChart } from "lucide-react"
-import Link from "next/link"
-import Button from "@/components/atoms/Button"
-import PropertyGridClient from "@/components/organisms/PropertyGridClient"
+import {
+  ArrowRight,
+  Home,
+  TrendingUp,
+  Shield,
+  CheckCircle,
+  Users,
+  BarChart,
+} from "lucide-react";
+import Link from "next/link";
+import Button from "@/components/atoms/Button";
+import PropertyGridClient from "@/components/organisms/PropertyGridClient";
 
 const mockProperties = [
   {
@@ -40,30 +48,31 @@ const mockProperties = [
     image: "/placeholder.svg?height=200&width=300",
     type: "Penthouse",
   },
-]
+];
 
 const features = [
   {
     icon: Home,
     title: "Property Management",
-    description: "Manage your property portfolio with advanced tools and intuitive visualization.",
+    description:
+      "Manage your property portfolio with advanced tools and intuitive visualization.",
     color: "primary",
   },
   {
     icon: TrendingUp,
     title: "Transaction Tracking",
-    description: "Monitor the progress of each transaction with detailed checklists and automatic notifications.",
+    description:
+      "Monitor the progress of each transaction with detailed checklists and automatic notifications.",
     color: "secondary",
   },
   {
     icon: Shield,
     title: "Security and Trust",
-    description: "Secure platform with data encryption and industry compliance.",
+    description:
+      "Secure platform with data encryption and industry compliance.",
     color: "tertiary",
   },
-]
-
-
+];
 
 export default function HomePage() {
   return (
@@ -73,14 +82,19 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-primary font-primary">PropManager</h1>
+              <h1 className="text-2xl font-bold text-primary font-primary">
+                Benchmark Real Estate Group, Inc.
+              </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/signin">
+              <Link href="/auth/login?screen_hint=signup">
                 <Button variant="ghost">Sign In</Button>
               </Link>
-              <Link href="/signup/role-selection">
-                <Button>Get Started</Button>
+              <Link href="/auth/login?returnTo=%2Fdashboard">
+                <Button>Login</Button>
+              </Link>
+              <Link href="/auth/logout">
+                <Button>Logout</Button>
               </Link>
             </div>
           </div>
@@ -102,19 +116,27 @@ export default function HomePage() {
                   </span>
                 </h1>
                 <p className="text-xl text-muted-foreground max-w-2xl font-secondary leading-relaxed">
-                  The comprehensive platform that empowers real estate agents and clients to manage properties,
-                  transactions, and business relationships with unprecedented efficiency and transparency.
+                  The comprehensive platform that empowers real estate agents
+                  and clients to manage properties, transactions, and business
+                  relationships with unprecedented efficiency and transparency.
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/signup/role-selection">
-                  <Button size="lg" className="text-lg px-8 py-4 w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    className="text-lg px-8 py-4 w-full sm:w-auto"
+                  >
                     Start Free Trial
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="text-lg px-8 py-4 w-full sm:w-auto"
+                >
                   Login
                 </Button>
               </div>
@@ -159,7 +181,8 @@ export default function HomePage() {
               Everything You Need to Succeed
             </h2>
             <p className="text-xl text-muted-foreground font-secondary max-w-3xl mx-auto">
-              Powerful tools designed specifically for real estate professionals and their clients
+              Powerful tools designed specifically for real estate professionals
+              and their clients
             </p>
           </div>
 
@@ -169,8 +192,12 @@ export default function HomePage() {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors">
                   <feature.icon className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-4 font-secondary">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-semibold mb-4 font-secondary">
+                  {feature.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
@@ -181,7 +208,9 @@ export default function HomePage() {
       <section className="py-20 bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 font-primary">Featured Properties</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 font-primary">
+              Featured Properties
+            </h2>
             <p className="text-xl text-muted-foreground font-secondary">
               Discover some of the best available properties
             </p>
@@ -197,14 +226,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      
-
       {/* Footer */}
       <footer className="bg-card border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
-            <h3 className="text-2xl font-bold text-primary mb-4 font-primary">PropManager</h3>
-            <p className="text-muted-foreground mb-8">The complete solution for modern real estate management</p>
+            <h3 className="text-2xl font-bold text-primary mb-4 font-primary">
+              PropManager
+            </h3>
+            <p className="text-muted-foreground mb-8">
+              The complete solution for modern real estate management
+            </p>
             <div className="flex justify-center space-x-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">
                 Terms
@@ -220,5 +251,5 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
