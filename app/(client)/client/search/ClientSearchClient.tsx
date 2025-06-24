@@ -6,6 +6,8 @@ import DashboardLayout from "@/components/templates/DashboardLayout"
 import PropertyCard from "@/components/molecules/PropertyCard"
 import Input from "@/components/atoms/Input"
 import Button from "@/components/atoms/Button"
+import { useProperties } from "@/hooks/use-properties"
+
 
 const mockClientUser = {
   id: "client-1",
