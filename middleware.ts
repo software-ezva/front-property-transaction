@@ -3,13 +3,13 @@ import { NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
 
 export async function middleware(request: NextRequest) {
-  //return await auth0.middleware(request);
-  const auth0Response = await auth0.middleware(request);
+  const authResponse = await auth0.middleware(request);
 
-  // Si es ruta de Auth0 (/auth/*), dejar que Auth0 la maneje
+  // if path starts with /auth, let the auth middleware handle it
   if (request.nextUrl.pathname.startsWith("/auth")) {
-    return auth0Response;
+    return authResponse;
   }
+
   const publicRoutes = ["/"];
   const isPublicRoute = publicRoutes.some(
     (route) => request.nextUrl.pathname === route
@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
-  if (isProtectedRoute) {
+  if (isProtectedRoute) { 
     try {
       const session = await auth0.getSession(request);
 
@@ -29,8 +29,24 @@ export async function middleware(request: NextRequest) {
         loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
       }
+      const profileType = session.user.profile?.profileType;
 
       console.log("Usuario autenticado:", session.user.email);
+      if (
+        request.nextUrl.pathname.startsWith("/agent") &&
+        profileType !== "real_estate_agent"
+      ) {
+        return NextResponse.redirect(new URL("/client/dashboard", request.url));
+      }
+
+      // Si intenta acceder a /client y no es cliente, redirige
+      if (
+        request.nextUrl.pathname.startsWith("/client") &&
+        profileType !== "client"
+      ) {
+        return NextResponse.redirect(new URL("/agent/dashboard", request.url));
+      }
+      
     } catch (error) {
       console.error("Error verificando sesión:", error);
       const loginUrl = new URL("/auth/login", request.url);
@@ -38,6 +54,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   }
+  return authResponse;
 }
 
 export const config = {
