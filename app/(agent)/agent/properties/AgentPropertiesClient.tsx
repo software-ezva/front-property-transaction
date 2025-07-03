@@ -6,69 +6,84 @@ import DashboardLayout from "@/components/templates/DashboardLayout"
 import PropertyCard from "@/components/molecules/PropertyCard"
 import Input from "@/components/atoms/Input"
 import Button from "@/components/atoms/Button"
-
-const mockAgentUser = {
-  id: "agent-1",
-  name: "Ana Garcia",
-  email: "ana@propmanager.com",
-  role: "agent" as const,
-}
-
-const mockProperties = [
-  {
-    id: "1",
-    title: "Modern downtown apartment",
-    price: 350000,
-    location: "Downtown, New York",
-    bedrooms: 2,
-    bathrooms: 2,
-    area: 85,
-    status: "available" as const,
-    image: "/placeholder.svg?height=200&width=300",
-    type: "Apartment",
-  },
-  {
-    id: "2",
-    title: "Family house with garden",
-    price: 450000,
-    location: "Suburbs, Los Angeles",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: 180,
-    status: "pending" as const,
-    image: "/placeholder.svg?height=200&width=300",
-    type: "House",
-  },
-  {
-    id: "3",
-    title: "Luxury penthouse",
-    price: 750000,
-    location: "Manhattan, New York",
-    bedrooms: 3,
-    bathrooms: 3,
-    area: 150,
-    status: "sold" as const,
-    image: "/placeholder.svg?height=200&width=300",
-    type: "Penthouse",
-  },
-  {
-    id: "4",
-    title: "Cozy studio apartment",
-    price: 280000,
-    location: "Brooklyn, New York",
-    bedrooms: 1,
-    bathrooms: 1,
-    area: 45,
-    status: "available" as const,
-    image: "/placeholder.svg?height=200&width=300",
-    type: "Studio",
-  },
-]
+import { useUser } from "@auth0/nextjs-auth0"
 
 export default function AgentPropertiesClient() {
+  const { user, isLoading } = useUser();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return <div>No user session found.</div>;
+  if (!user.profile) return <div>No agent profile found.</div>;
+
+  // El perfil guardado en la sesión
+  const agentProfile = user.profile as {
+    esignName: string;
+    esignInitials: string;
+    licenseNumber: string;
+    profileType: string;
+  };
+
+  // Prepara el usuario para DashboardLayout
+  const agentUserForHeader = {
+    name: String(user.first_name + " " + user.last_name) || user.name || "",
+    profile: agentProfile.profileType?.replace(/_/g, " ") || "agent",
+    avatar: String(user.picture) || "",
+  };
+
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
+
+  const mockProperties = [
+    {
+      id: "1",
+      title: "Modern downtown apartment",
+      price: 350000,
+      location: "Downtown, New York",
+      bedrooms: 2,
+      bathrooms: 2,
+      area: 85,
+      status: "available" as const,
+      image: "/placeholder.svg?height=200&width=300",
+      type: "Apartment",
+    },
+    {
+      id: "2",
+      title: "Family house with garden",
+      price: 450000,
+      location: "Suburbs, Los Angeles",
+      bedrooms: 4,
+      bathrooms: 3,
+      area: 180,
+      status: "pending" as const,
+      image: "/placeholder.svg?height=200&width=300",
+      type: "House",
+    },
+    {
+      id: "3",
+      title: "Luxury penthouse",
+      price: 750000,
+      location: "Manhattan, New York",
+      bedrooms: 3,
+      bathrooms: 3,
+      area: 150,
+      status: "sold" as const,
+      image: "/placeholder.svg?height=200&width=300",
+      type: "Penthouse",
+    },
+    {
+      id: "4",
+      title: "Cozy studio apartment",
+      price: 280000,
+      location: "Brooklyn, New York",
+      bedrooms: 1,
+      bathrooms: 1,
+      area: 45,
+      status: "available" as const,
+      image: "/placeholder.svg?height=200&width=300",
+      type: "Studio",
+    },
+  ]
 
   const filteredProperties = mockProperties.filter((property) => {
     const matchesSearch =
@@ -116,7 +131,7 @@ export default function AgentPropertiesClient() {
   ]
 
   return (
-    <DashboardLayout user={mockAgentUser}>
+    <DashboardLayout user={agentUserForHeader}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

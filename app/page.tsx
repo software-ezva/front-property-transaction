@@ -10,6 +10,8 @@ import {
 import Link from "next/link";
 import Button from "@/components/atoms/Button";
 import PropertyGridClient from "@/components/organisms/PropertyGridClient";
+import { ENTERPRISE } from "@/utils/enterprise";
+import { ENDPOINTS } from "@/lib/constants";
 
 const mockProperties = [
   {
@@ -83,17 +85,17 @@ export default function HomePage() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-primary font-primary">
-                Benchmark Real Estate Group, Inc.
+                {ENTERPRISE.name}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/auth/login?screen_hint=signup">
-                <Button variant="ghost">Sign In</Button>
+              <Link href={ENDPOINTS.auth0.SIGNUP}>
+                <Button variant="ghost">Sign Up</Button>
               </Link>
-              <Link href="/auth/login?returnTo=%2Fdashboard">
+              <Link href={ENDPOINTS.auth0.LOGIN}>
                 <Button>Login</Button>
               </Link>
-              <Link href="/auth/logout">
+              <Link href={ENDPOINTS.auth0.LOGOUT}>
                 <Button>Logout</Button>
               </Link>
             </div>
@@ -116,9 +118,7 @@ export default function HomePage() {
                   </span>
                 </h1>
                 <p className="text-xl text-muted-foreground max-w-2xl font-secondary leading-relaxed">
-                  The comprehensive platform that empowers real estate agents
-                  and clients to manage properties, transactions, and business
-                  relationships with unprecedented efficiency and transparency.
+                  {ENTERPRISE.description}
                 </p>
               </div>
 

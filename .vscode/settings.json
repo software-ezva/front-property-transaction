@@ -1,0 +1,9 @@
+{
+  "conventionalCommits.scopes": [
+    "pages",
+    "components",
+    "auth",
+    "middleware",
+    "routes"
+  ]
+}
