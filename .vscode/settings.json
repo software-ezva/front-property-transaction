@@ -4,6 +4,7 @@
     "components",
     "auth",
     "middleware",
-    "routes"
+    "routes",
+    "docs"
   ]
 }
