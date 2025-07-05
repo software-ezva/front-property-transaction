@@ -8,6 +8,7 @@ import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import Link from "next/link";
 import { useUser } from "@auth0/nextjs-auth0";
+import { ENDPOINTS } from "@/lib/constants";
 
 type UserRole = "client" | "realestateagent" | null;
 
@@ -82,14 +83,14 @@ export default function RoleSelectionClient() {
 
       let payload: Record<string, any> = {};
       if (formData.role === "realestateagent") {
-        endpoint = "/api/profiles/agent";
+        endpoint = ENDPOINTS.internal.AGENT_PROFILE;
         payload = {
           esign_name: formData.esign_name,
           esign_initials: formData.esign_initials,
           license_number: formData.license_number,
         };
       } else if (formData.role === "client") {
-        endpoint = "/api/profiles/client";
+        endpoint = ENDPOINTS.internal.CLIENT_PROFILE;
         payload = {
           esign_name: formData.esign_name,
           esign_initials: formData.esign_initials,
@@ -118,8 +119,6 @@ export default function RoleSelectionClient() {
       } else {
         router.push("/");
       }
-      
-
     } catch (error) {
       console.error("Submission error:", error);
       let errorMessage = "Unknown error";
@@ -129,20 +128,19 @@ export default function RoleSelectionClient() {
           errorMessage = `The API endpoint (${endpoint}) could not be found. Please check your backend configuration.`;
         } else if (apiError.status) {
           errorMessage = `Error ${apiError.status}: ${
-              apiError.message || apiError.statusText || "Unknown error"
+            apiError.message || apiError.statusText || "Unknown error"
           }`;
         } else {
           errorMessage = apiError.message || "Error processing your request";
         }
       }
       alert(
-          `There was an error saving your profile: ${errorMessage}. Please try again.`
+        `There was an error saving your profile: ${errorMessage}. Please try again.`
       );
     } finally {
       setIsSubmitting(false);
     }
   };
-
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData({ ...formData, [field]: value });

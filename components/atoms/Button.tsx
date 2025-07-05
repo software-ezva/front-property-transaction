@@ -39,7 +39,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         "bg-tertiary text-tertiary-foreground hover:bg-muted shadow-sm hover:shadow-md",
       outline:
         "border border-border bg-card hover:bg-accent hover:text-accent-foreground shadow-sm hover:shadow-md",
-      ghost: "hover:bg-accent hover:text-accent-foreground",
+      ghost: "hover:bg-muted hover:text-accent-foreground",
       destructive:
         "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm hover:shadow-md",
     };
