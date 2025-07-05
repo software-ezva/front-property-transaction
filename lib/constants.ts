@@ -5,18 +5,21 @@
 import { LogIn } from "lucide-react";
 import { auth0 } from "./auth0";
 
-// Endpoints de la ApiClientSide
 export const ENDPOINTS = {
-  // Perfiles
   api: {
-    AGENT_PROFILE: "profiles/agent",
-    CLIENT_PROFILE: "profiles/client",
+    AGENT_PROFILE: "/agent",
+    CLIENT_PROFILE: "/clients",
+    TRANSACTIONS: "/transactions",
+    PROPERTIES: "/properties",
+  },
+  internal: {
+    AGENT_PROFILE: "/api/agents",
+    CLIENT_PROFILE: "/api/clients",
+    TRANSACTIONS: "/api/transactions",
+    PROPERTIES: "/api/properties",
   },
 
-  // Salud del sistema
   HEALTH_CHECK: "health",
-
-  // Autenticación
   auth0: {
     LOGIN: "/auth/login",
     SIGNUP: "/auth/login?screen_hint=signup",

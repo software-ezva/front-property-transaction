@@ -1,7 +1,7 @@
 export const ENTERPRISE = {
-  name: "Benchmark Real Estate Group, Inc.",
+  name: "Home Connect LLC.",
 
-  description: `Join today and take control 
+  description: `Join Home Connect LLC. today and take control 
                 of your real estate journey. Effortlessly manage properties, 
                 transactions, and relationships all in one powerful, transparent 
                 platform. Empower your business. Get started now!`,

@@ -28,17 +28,11 @@ class ApiServerClientClass {
     if (!isFormData) {
       headers["Content-Type"] = "application/json";
     }
-
-    // Agregar cabeceras de seguridad básicas
     headers["X-Requested-With"] = "XMLHttpRequest";
-
-    // Obtener token de Auth0 en el cliente
     let accessToken = await auth0.getAccessToken();
-
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken.token}`;
     }
-
     return headers;
   }
 
@@ -98,7 +92,7 @@ class ApiServerClientClass {
     const { timeout = this.defaultTimeout, ...restOptions } = options;
     const isFormData = data instanceof FormData;
     const headers = await this.getHeaders(isFormData);
-    const url = `${this.baseUrl}/${endpoint}`;
+    const url = `${this.baseUrl}${endpoint}`;
     console.log(`[API] Request: ${method} ${url}`);
     const response = await this.fetchWithTimeout(
       url,
