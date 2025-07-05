@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState } from "react";
 import {
   Search,
@@ -17,6 +16,7 @@ import TransactionCard from "@/components/molecules/TransactionCard";
 import Input from "@/components/atoms/Input";
 import Button from "@/components/atoms/Button";
 import { useUser } from "@auth0/nextjs-auth0";
+import PageTitle from "@/components/molecules/PageTitle";
 
 export default function AgentTransactionsClient() {
   const { user, isLoading } = useUser();
@@ -166,12 +166,10 @@ export default function AgentTransactionsClient() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground font-primary">
-              Transactions
-            </h1>
-            <p className="text-muted-foreground font-secondary">
-              Manage and monitor all your real estate transactions
-            </p>
+            <PageTitle
+              title="Transactions"
+              subtitle="Manage and monitor all your real estate transactions."
+            />
           </div>
           <Button
             onClick={() => {
