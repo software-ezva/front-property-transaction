@@ -54,3 +54,15 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const result = await ApiServerClient.get(ENDPOINTS.api.CLIENT_PROFILE);
+    return NextResponse.json(result, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || "Error fetching client profile" },
+      { status: 500 }
+    );
+  }
+}

@@ -5,6 +5,7 @@
     "auth",
     "middleware",
     "routes",
-    "docs"
+    "docs",
+    "api"
   ]
 }
