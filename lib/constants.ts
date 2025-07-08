@@ -7,7 +7,7 @@ import { auth0 } from "./auth0";
 
 export const ENDPOINTS = {
   api: {
-    AGENT_PROFILE: "/agent",
+    AGENT_PROFILE: "/agents",
     CLIENT_PROFILE: "/clients",
     TRANSACTIONS: "/transactions",
     PROPERTIES: "/properties",
