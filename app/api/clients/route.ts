@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     if (!body.esign_name || !body.esign_initials || !body.date_of_birth) {
       return NextResponse.json(
-        { message: "Missing required fields" },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     if (!session) {
       return NextResponse.json(
-        { message: "User not authenticated" },
+        { error: "User not authenticated" },
         { status: 401 }
       );
     }
@@ -49,8 +49,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     return NextResponse.json(
-      { message: error.message || "Error creating client profile" },
-      { status: 500 }
+      {
+        error: error.message || "Error creating client profile",
+        details: error.data?.message || error.details,
+        status: error.status || 500,
+      },
+      { status: error.status || 500 }
     );
   }
 }
@@ -60,9 +64,14 @@ export async function GET(req: NextRequest) {
     const result = await ApiServerClient.get(ENDPOINTS.api.CLIENT_PROFILE);
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
+    console.error("Error del backend:", error);
     return NextResponse.json(
-      { message: error.message || "Error fetching client profile" },
-      { status: 500 }
+      {
+        error: error.message || "Error fetching client profile",
+        details: error.data?.message || error.details,
+        status: error.status || 500,
+      },
+      { status: error.status || 500 }
     );
   }
 }

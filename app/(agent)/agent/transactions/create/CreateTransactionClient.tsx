@@ -12,6 +12,7 @@ import { useUser } from "@auth0/nextjs-auth0";
 import PageTitle from "@/components/molecules/PageTitle";
 import ReturnTo from "@/components/molecules/ReturnTo";
 import { ENDPOINTS } from "@/lib/constants";
+import { apiClient } from "@/lib/api-internal";
 import type { SimpleUserResponseDto } from "@/types/api";
 
 export default function CreateTransactionClient() {
@@ -27,17 +28,16 @@ export default function CreateTransactionClient() {
     notes: "",
     transactionType: "Purchase",
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const response = await fetch(ENDPOINTS.internal.PROPERTIES);
-        if (!response.ok) throw new Error("Failed to fetch properties");
-        const data = await response.json();
+        const data = await apiClient.get(ENDPOINTS.internal.PROPERTIES);
         setProperties(data);
       } catch (error) {
+        // Error se muestra automáticamente como toast
+        console.error("Error loading properties:", error);
       } finally {
         setLoadingProperties(false);
       }
@@ -48,11 +48,11 @@ export default function CreateTransactionClient() {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch(ENDPOINTS.internal.CLIENT_PROFILE);
-        if (!response.ok) throw new Error("Failed to fetch clients");
-        const data = await response.json();
+        const data = await apiClient.get(ENDPOINTS.internal.CLIENT_PROFILE);
         setClients(data);
       } catch (error) {
+        // Error se muestra automáticamente como toast
+        console.error("Error loading clients:", error);
       } finally {
         setLoadingClients(false);
       }
@@ -93,14 +93,10 @@ export default function CreateTransactionClient() {
   );
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
     if (!formData.propertyId) {
-      newErrors.propertyId = "Property selection is required";
+      return false;
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,21 +116,15 @@ export default function CreateTransactionClient() {
         additionalNotes: formData.notes,
       };
 
-      const response = await fetch(ENDPOINTS.internal.TRANSACTIONS, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error("Failed to create transaction");
-      const data = await response.json();
+      const data = await apiClient.post(
+        ENDPOINTS.internal.TRANSACTIONS,
+        payload
+      );
 
       router.push(`/agent/transactions/${data.id || "new"}`);
     } catch (error) {
+      // Error se muestra automáticamente como toast
       console.error("Error creating transaction:", error);
-      setErrors({ general: "Failed to create transaction. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -145,9 +135,6 @@ export default function CreateTransactionClient() {
     value: string
   ) => {
     setFormData({ ...formData, [field]: value });
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: "" });
-    }
   };
 
   const calculateCommission = (price: number) => {
@@ -184,12 +171,6 @@ export default function CreateTransactionClient() {
               onSubmit={handleSubmit}
               className="bg-card rounded-lg p-6 border border-border space-y-6"
             >
-              {errors.general && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-                  <p className="text-destructive text-sm">{errors.general}</p>
-                </div>
-              )}
-
               {/* Transaction Type */}
               <div>
                 <label className="text-sm font-medium text-foreground block mb-2">
@@ -223,9 +204,7 @@ export default function CreateTransactionClient() {
                   onChange={(e) =>
                     handleInputChange("propertyId", e.target.value)
                   }
-                  className={`w-full px-3 py-2 border rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
-                    errors.propertyId ? "border-destructive" : "border-input"
-                  }`}
+                  className="w-full px-3 py-2 border rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring border-input"
                   required
                   disabled={loadingProperties}
                 >
@@ -243,11 +222,6 @@ export default function CreateTransactionClient() {
                       </option>
                     ))}
                 </select>
-                {errors.propertyId && (
-                  <p className="text-destructive text-sm mt-1">
-                    {errors.propertyId}
-                  </p>
-                )}
               </div>
 
               {/* Client Selection */}

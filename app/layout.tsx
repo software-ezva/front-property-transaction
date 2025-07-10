@@ -2,6 +2,8 @@ import type React from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AuthRedirect from "./_auth-redirect";
+import { ErrorNotificationProvider } from "@/hooks/use-error-notification";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "PropManager - Real Estate Management Platform",
@@ -30,8 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <AuthRedirect />
-        {children}
+        <ErrorNotificationProvider>
+          <AuthRedirect />
+          {children}
+          <Toaster />
+        </ErrorNotificationProvider>
       </body>
     </html>
   );

@@ -6,16 +6,16 @@ export async function GET(req: NextRequest) {
   try {
     // Fetch properties from the API
     const properties = await ApiServerClient.get(ENDPOINTS.api.PROPERTIES);
-    console.log("Properties fetched successfully:", properties);
 
     return NextResponse.json(properties, { status: 200 });
   } catch (error: any) {
-    console.error("Error fetching properties:", error);
     return NextResponse.json(
-      { message: error.message || "Error fetching properties" },
-      { status: 500 }
+      {
+        error: error.message || "Error fetching properties",
+        details: error.data?.message || error.details,
+        status: error.status || 500,
+      },
+      { status: error.status || 500 }
     );
   }
 }
-
-

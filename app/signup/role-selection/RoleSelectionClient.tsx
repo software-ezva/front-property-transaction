@@ -9,6 +9,7 @@ import Input from "@/components/atoms/Input";
 import Link from "next/link";
 import { useUser } from "@auth0/nextjs-auth0";
 import { ENDPOINTS } from "@/lib/constants";
+import { apiClient } from "@/lib/api-internal";
 
 type UserRole = "client" | "realestateagent" | null;
 
@@ -100,16 +101,7 @@ export default function RoleSelectionClient() {
         throw new Error("Invalid role");
       }
       // Always use the internal ApiClientSide route for both roles
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error creating profile");
-      }
-      const res = await response.json();
+      const res = await apiClient.post(endpoint, payload);
 
       // Redirect to dashboard according to role
       if (formData.role === "realestateagent") {
@@ -120,23 +112,8 @@ export default function RoleSelectionClient() {
         router.push("/");
       }
     } catch (error) {
+      // Error se muestra automáticamente como toast
       console.error("Submission error:", error);
-      let errorMessage = "Unknown error";
-      if (error instanceof Error) {
-        const apiError = error as any;
-        if (apiError.status === 404) {
-          errorMessage = `The API endpoint (${endpoint}) could not be found. Please check your backend configuration.`;
-        } else if (apiError.status) {
-          errorMessage = `Error ${apiError.status}: ${
-            apiError.message || apiError.statusText || "Unknown error"
-          }`;
-        } else {
-          errorMessage = apiError.message || "Error processing your request";
-        }
-      }
-      alert(
-        `There was an error saving your profile: ${errorMessage}. Please try again.`
-      );
     } finally {
       setIsSubmitting(false);
     }
