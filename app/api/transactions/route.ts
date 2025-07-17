@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   const payload: any = {
-    propertyId: Number(body.propertyId),
+    propertyId: body.propertyId,
     transactionType: body.transactionType,
   };
 
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   if (body.additionalNotes && body.additionalNotes.trim() !== "") {
     payload.additionalNotes = body.additionalNotes;
   }
-
+  console.log("Creating transaction with payload:", payload);
   try {
     const result = await ApiServerClient.post(
       ENDPOINTS.api.TRANSACTIONS,
@@ -25,9 +25,28 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
+    console.error("Error creating transaction:", error);
     return NextResponse.json(
       {
         error: error.message || "Failed to create transaction",
+        details: error.data?.message || error.details,
+        status: error.status || 500,
+      },
+      { status: error.status || 500 }
+    );
+  }
+}
+
+// GET /api/transactions
+export async function GET() {
+  try {
+    const result = await ApiServerClient.get(ENDPOINTS.api.TRANSACTIONS);
+    return NextResponse.json(result, { status: 200 });
+  } catch (error: any) {
+    console.error("Error fetching transactions:", error);
+    return NextResponse.json(
+      {
+        error: error.message || "Failed to fetch transactions",
         details: error.data?.message || error.details,
         status: error.status || 500,
       },

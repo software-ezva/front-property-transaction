@@ -107,11 +107,9 @@ export default function CreateTransactionClient() {
     setIsSubmitting(true);
 
     try {
-      // Construir el payload según lo que espera la API
       const payload = {
-        propertyId: Number(formData.propertyId),
-        agentId: user.profile?.id, // Asegúrate que el id del agente esté en el perfil
-        clientId: formData.clientId ? Number(formData.clientId) : undefined,
+        propertyId: formData.propertyId,
+        clientId: formData.clientId ? formData.clientId : undefined,
         transactionType: formData.transactionType,
         additionalNotes: formData.notes,
       };
