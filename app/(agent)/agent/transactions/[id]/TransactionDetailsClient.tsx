@@ -23,11 +23,7 @@ import DashboardLayout from "@/components/templates/DashboardLayout";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
 import Link from "next/link";
-
-const mockAgentUser = {
-  name: "Ana García",
-  role: "agent" as const,
-};
+import { useUser } from "@auth0/nextjs-auth0";
 
 // New data structures for workflow timeline
 type ItemStatus = "not_started" | "in_progress" | "completed";
@@ -245,12 +241,31 @@ interface TransactionDetailsClientProps {
 export default function TransactionDetailsClient({
   transactionId,
 }: TransactionDetailsClientProps) {
+  const { user, isLoading } = useUser();
   const [activeTab, setActiveTab] = useState<
     "overview" | "timeline" | "documents"
   >("overview");
   const [expandedChecklists, setExpandedChecklists] = useState<number[]>([
     1, 2, 3, 4,
   ]);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return <div>No user session found.</div>;
+  if (!user.profile) return <div>No agent profile found.</div>;
+
+  // Prepara el usuario para DashboardLayout
+  const agentProfile = user.profile as {
+    esignName: string;
+    esignInitials: string;
+    licenseNumber: string;
+    profileType: string;
+  };
+
+  const agentUserForHeader = {
+    name: String(user.first_name + " " + user.last_name) || user.name || "",
+    profile: agentProfile.profileType?.replace(/_/g, " ") || "agent",
+    avatar: String(user.picture) || "",
+  };
 
   // En una app real, aquí harías fetch de los datos usando el transactionId
   const transaction = mockTransactionData;
@@ -324,7 +339,7 @@ export default function TransactionDetailsClient({
   };
 
   return (
-    <DashboardLayout user={mockAgentUser}>
+    <DashboardLayout user={agentUserForHeader}>
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
