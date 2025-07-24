@@ -11,12 +11,14 @@ export const ENDPOINTS = {
     CLIENT_PROFILE: "/clients",
     TRANSACTIONS: "/transactions",
     PROPERTIES: "/properties",
+    TEMPLATES: "/templates",
   },
   internal: {
     AGENT_PROFILE: "/api/agents",
     CLIENT_PROFILE: "/api/clients",
     TRANSACTIONS: "/api/transactions",
     PROPERTIES: "/api/properties",
+    TEMPLATES: "/api/templates",
   },
 
   HEALTH_CHECK: "health",
