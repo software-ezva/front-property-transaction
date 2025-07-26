@@ -6,6 +6,7 @@
     "middleware",
     "routes",
     "docs",
-    "api"
+    "api",
+    "dependencies"
   ]
 }
