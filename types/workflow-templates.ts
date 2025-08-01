@@ -1,3 +1,5 @@
+// Alias for compatibility with existing code
+export type ChecklistItem = ItemTemplate;
 // Enum para tipos de transacción
 export enum TransactionType {
   PURCHASE = "Purchase",

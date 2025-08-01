@@ -1,6 +1,7 @@
 import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
 import { Edit, Copy, Trash2, Settings } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
 interface TemplateCardProps {
@@ -60,26 +61,19 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                (window.location.href = `/agent/workflow-templates/${template.id}`)
-              }
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              View Details
-            </Button>
+            <Link href={`/agent/workflow-templates/${template.id}`} passHref legacyBehavior>
+              <Button asChild variant="outline" size="sm">
+                  <Settings className="w-4 h-4 mr-2" />
+                  View Details
+              </Button>
+            </Link>
           </div>
           <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(template.id)}
-              title="Edit template"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+            <Link href={`/agent/workflow-templates/${template.id}/edit`} passHref legacyBehavior>
+              <Button asChild variant="ghost" size="sm" title="Edit template">
+                  <Edit className="w-4 h-4" />
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               size="sm"
