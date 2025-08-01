@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
       }
       const profileType = session.user.profile?.profileType;
 
-      console.log("Usuario autenticado:", session.user.email);
+      console.log("Usuario autenticado-Middleware:", session.user.email);
       if (
         request.nextUrl.pathname.startsWith("/agent") &&
         profileType !== "real_estate_agent"

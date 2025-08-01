@@ -17,7 +17,6 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  console.log("DashboardLayout user:", user);
 
   return (
     <div className="min-h-screen bg-background">

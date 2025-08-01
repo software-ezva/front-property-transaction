@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@auth0/nextjs-auth0";
 import {
   Search,
   Plus,
@@ -11,8 +10,8 @@ import {
   FileText,
   Settings,
 } from "lucide-react";
-import DashboardLayout from "@/components/templates/DashboardLayout";
 import Button from "@/components/atoms/Button";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { TransactionType } from "@/types/workflow-templates";
 import TemplateCard from "@/components/molecules/TemplateCard";
@@ -26,8 +25,8 @@ type Template = {
   checklistTemplates: Array<{ name: string; taskCount?: number }>;
 };
 
-function WorkflowTemplatesClient() {
-  const { user, isLoading } = useUser();
+export default function WorkflowTemplatesClient() {
+
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -55,7 +54,8 @@ function WorkflowTemplatesClient() {
   );
 
   const handleEdit = (id: string) => {
-    window.location.href = `/agent/workflow-templates/${id}/edit`;
+    // Usar Link en TemplateCard, no navegación directa aquí
+    // window.location.href = `/agent/workflow-templates/${id}/edit`;
   };
 
   const handleDuplicate = (template: Template) => {
@@ -86,35 +86,16 @@ function WorkflowTemplatesClient() {
       : "N/A";
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (!user) return <div>No user session found.</div>;
-  if (!user.profile) return <div>No agent profile found.</div>;
-
-  const agentProfile = user.profile as {
-    esignName: string;
-    esignInitials: string;
-    licenseNumber: string;
-    profileType: string;
-  };
-  const agentUserForHeader = {
-    name:
-      `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
-      user.name ||
-      "",
-    profile: agentProfile.profileType?.replace(/_/g, " ") || "agent",
-    avatar: String(user.picture) || "",
-  };
-
-  // No loading page-wide, loading will be shown in the grid below
-  if (error)
+  if (error) {
     return (
-      <div className="bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive text-center">
-        {error}
+      <div className="flex items-center justify-center min-h-[200px]">
+        <p className="text-destructive">Error: {error}</p>
       </div>
     );
+  }
 
   return (
-    <DashboardLayout user={agentUserForHeader}>
+    
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -124,15 +105,12 @@ function WorkflowTemplatesClient() {
               subtitle="Manage workflow templates for different transaction types"
             />
           </div>
-          <Button
-            onClick={() =>
-              (window.location.href = "/agent/workflow-templates/create")
-            }
-            className="sm:w-auto"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Template
-          </Button>
+          <Link href="/agent/workflow-templates/create" passHref legacyBehavior>
+            <Button asChild className="sm:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Template
+            </Button>
+          </Link>
         </div>
 
         {/* Filters */}
@@ -199,20 +177,21 @@ function WorkflowTemplatesClient() {
                   ? "No templates match your current filters."
                   : "Create your first workflow template to get started."}
               </p>
-              <Button
-                onClick={() =>
-                  (window.location.href = "/agent/workflow-templates/create")
-                }
+              <Link
+                href="/agent/workflow-templates/create"
+                passHref
+                legacyBehavior
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Template
-              </Button>
+                <Button asChild>
+                  <a>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Template
+                  </a>
+                </Button>
+              </Link>
             </div>
           )}
         </div>
       </div>
-    </DashboardLayout>
   );
 }
-
-export default WorkflowTemplatesClient;

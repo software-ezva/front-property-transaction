@@ -4,11 +4,10 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Building2, User, FileText } from "lucide-react";
-import DashboardLayout from "@/components/templates/DashboardLayout";
 import Input from "@/components/atoms/Input";
 import Button from "@/components/atoms/Button";
 import Link from "next/link";
-import { useUser } from "@auth0/nextjs-auth0";
+import { useAgentAuth } from "@/hooks/use-agent-auth";
 import PageTitle from "@/components/molecules/PageTitle";
 import ReturnTo from "@/components/molecules/ReturnTo";
 import { ENDPOINTS } from "@/lib/constants";
@@ -17,7 +16,12 @@ import type { SimpleUserResponseDto } from "@/types/api";
 
 export default function CreateTransactionClient() {
   const router = useRouter();
-  const { user, isLoading } = useUser();
+  const { agentUser, agentProfile } = useAgentAuth();
+
+  // Si llegamos aquí, ya sabemos que la autenticación fue exitosa gracias al layout
+  if (!agentUser || !agentProfile) {
+    return <div>Loading user data...</div>;
+  }
   const [properties, setProperties] = useState<any[]>([]);
   const [loadingProperties, setLoadingProperties] = useState(true);
   const [clients, setClients] = useState<SimpleUserResponseDto[]>([]);
@@ -66,24 +70,6 @@ export default function CreateTransactionClient() {
     notes: string;
     transactionType: string;
   }
-
-  if (isLoading) return <div>Loading...</div>;
-  if (!user) return <div>No user session found.</div>;
-  if (!user.profile) return <div>No agent profile found.</div>;
-
-  // Prepara el usuario para DashboardLayout
-  const agentProfile = user.profile as {
-    esignName: string;
-    esignInitials: string;
-    licenseNumber: string;
-    profileType: string;
-  };
-
-  const agentUserForHeader = {
-    name: String(user.first_name + " " + user.last_name) || user.name || "",
-    profile: agentProfile.profileType?.replace(/_/g, " ") || "agent",
-    avatar: String(user.picture) || "",
-  };
 
   const selectedProperty = properties.find(
     (p) => String(p.id) === formData.propertyId
@@ -149,18 +135,17 @@ export default function CreateTransactionClient() {
   ];
 
   return (
-    <DashboardLayout user={agentUserForHeader}>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className=" items-center space-x-4 space-y-5">
-          <ReturnTo href="/agent/transactions" label="Back to Transactions" />
-          <div>
-            <PageTitle
-              title="Create New Transaction"
-              subtitle="Set up a new real estate transaction"
-            />
-          </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className=" items-center space-x-4 space-y-5">
+        <ReturnTo href="/agent/transactions" label="Back to Transactions" />
+        <div>
+          <PageTitle
+            title="Create New Transaction"
+            subtitle="Set up a new real estate transaction"
+          />
         </div>
+      </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form */}
@@ -379,7 +364,7 @@ export default function CreateTransactionClient() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Agent:</span>
-                  <span className="font-medium">{agentUserForHeader.name}</span>
+                  <span className="font-medium">{agentUser.name}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Client:</span>
@@ -392,6 +377,5 @@ export default function CreateTransactionClient() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

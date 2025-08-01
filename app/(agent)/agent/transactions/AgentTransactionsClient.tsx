@@ -3,16 +3,22 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Search, Filter, Plus, FileText, Calendar, User } from "lucide-react";
-import DashboardLayout from "@/components/templates/DashboardLayout";
 import TransactionCard from "@/components/molecules/TransactionCard";
 import { TransactionStatus } from "@/types/transactions";
 import Input from "@/components/atoms/Input";
 import Button from "@/components/atoms/Button";
-import { useUser } from "@auth0/nextjs-auth0";
+import { useAgentAuth } from "@/hooks/use-agent-auth";
 import PageTitle from "@/components/molecules/PageTitle";
 import type { Transaction } from "@/types/transactions";
+
 export default function AgentTransactionsClient() {
-  const { user, isLoading } = useUser();
+  const { agentUser, agentProfile } = useAgentAuth();
+
+  // Si llegamos aquí, ya sabemos que la autenticación fue exitosa gracias al layout
+  if (!agentUser || !agentProfile) {
+    return <div>Loading user data...</div>;
+  }
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -36,23 +42,6 @@ export default function AgentTransactionsClient() {
     };
     fetchTransactions();
   }, []);
-
-  if (isLoading) return <div>Loading...</div>;
-  if (!user) return <div>No user session found.</div>;
-  if (!user.profile) return <div>No agent profile found.</div>;
-
-  const agentProfile = user.profile as {
-    esignName: string;
-    esignInitials: string;
-    licenseNumber: string;
-    profileType: string;
-  };
-
-  const agentUserForHeader = {
-    name: String(user.first_name + " " + user.last_name) || user.name || "",
-    profile: agentProfile.profileType?.replace(/_/g, " ") || "agent",
-    avatar: String(user.picture) || "",
-  };
 
   // Filtrado
   const filteredTransactions = transactions.filter((transaction) => {
@@ -101,26 +90,25 @@ export default function AgentTransactionsClient() {
   ];
 
   return (
-    <DashboardLayout user={agentUserForHeader}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <PageTitle
-              title="Transactions"
-              subtitle="Manage and monitor all your real estate transactions."
-            />
-          </div>
-          <Button
-            onClick={() => {
-              window.location.href = "/agent/transactions/create";
-            }}
-            className="sm:w-auto"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Transaction
-          </Button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <PageTitle
+            title="Transactions"
+            subtitle="Manage and monitor all your real estate transactions."
+          />
         </div>
+        <Button
+          onClick={() => {
+            window.location.href = "/agent/transactions/create";
+          }}
+          className="sm:w-auto"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Transaction
+        </Button>
+      </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -233,6 +221,5 @@ export default function AgentTransactionsClient() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

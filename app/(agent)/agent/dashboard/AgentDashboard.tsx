@@ -11,45 +11,22 @@ import {
   Calendar,
   Phone,
 } from "lucide-react";
-import DashboardLayout from "@/components/templates/DashboardLayout";
 import TransactionCard from "@/components/molecules/TransactionCard";
 import Button from "@/components/atoms/Button";
-import { useUser } from "@auth0/nextjs-auth0";
+import { useAgentAuth } from "@/hooks/use-agent-auth";
 import Link from "next/link";
+import PageTitle from "@/components/molecules/PageTitle";
 
 export default function AgentDashboard() {
-  const { user, isLoading } = useUser();
+  const { agentUser, agentProfile } = useAgentAuth();
 
-  if (isLoading) return <div>Loading...</div>;
-  if (!user) return <div>No user session found.</div>;
-  if (!user.profile) return <div>No agent profile found.</div>;
+  // Si llegamos aquí, ya sabemos que la autenticación fue exitosa gracias al layout
+  // agentUser y agentProfile no serán null
 
-  // El perfil guardado en la sesión
-  const agentProfile = user.profile as {
-    esignName: string;
-    esignInitials: string;
-    licenseNumber: string;
-    profileType: string;
-  };
-
-  // Puedes usar user.name, user.email, etc. según lo que tengas en la sesión
-  const agentUser = {
-    id: user.sub || user.id || "",
-    name: user.first_name + " " + user.last_name || user.name || "Agent",
-    email: user.email || "",
-    role: agentProfile.profileType || "realestateagent",
-    profile: {
-      esign_name: agentProfile.esignName,
-      esign_initials: agentProfile.esignInitials,
-      license_number: agentProfile.licenseNumber,
-    },
-  };
-
-  const agentUserForHeader = {
-    name: String(user.first_name + " " + user.last_name) || "",
-    profile: String(agentProfile.profileType.replace(/_/g, " ")) || "",
-    avatar: String(user.picture) || "",
-  };
+  if (!agentUser || !agentProfile) {
+    // Esto no debería pasar si el layout funciona correctamente
+    return <div>Loading user data...</div>;
+  }
 
   const agentStats = [
     {
@@ -135,80 +112,77 @@ export default function AgentDashboard() {
   };
 
   return (
-    <DashboardLayout user={agentUserForHeader}>
-      <div className="space-y-6">
-        {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
-          <h1 className="text-3xl font-bold text-foreground font-primary">
-            Welcome back, {agentUser.name}
-          </h1>
-          <p className="text-muted-foreground font-secondary mt-2">
-            Here's your business overview for today.
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
+        <PageTitle
+          title={`Welcome back, ${agentUser.name}`}
+          subtitle="Here's your business overview for today."
+        />
+        <div className="mt-4 flex flex-wrap gap-2 text-sm">
+          <span className="bg-primary/20 text-primary px-3 py-1 rounded-full">
+            License: {agentUser.profile.license_number}
+          </span>
+          {/* Si tienes más datos, agrégalos aquí */}
+        </div>
+      </div>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
+          <Building2 className="w-12 h-12 text-primary mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            New Property
+          </h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Add a new property
           </p>
-          <div className="mt-4 flex flex-wrap gap-2 text-sm">
-            <span className="bg-primary/20 text-primary px-3 py-1 rounded-full">
-              License: {agentUser.profile.license_number}
-            </span>
-            {/* Si tienes más datos, agrégalos aquí */}
-          </div>
-        </div>
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
-            <Building2 className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              New Property
-            </h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Add a new property
-            </p>
-            <Button className="w-full">Add Property</Button>
-          </div>
-
-          <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
-            <BarChart3 className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Create Transaction
-            </h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Add a new transaction
-            </p>
-            <Link href="/agent/transactions/create">
-              <Button variant="secondary" className="w-full">
-                Add Transaction
-              </Button>
-            </Link>
-          </div>
-
-          <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
-            <Users className="w-12 h-12 text-secondary mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              New Client
-            </h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Register a new client
-            </p>
-            <Button variant="tertiary" className="w-full">
-              Add Client
-            </Button>
-          </div>
-
-          <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
-            <Calendar className="w-12 h-12 text-tertiary mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Schedule Meeting
-            </h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Book a client meeting
-            </p>
-            <Button variant="outline" className="w-full">
-              Schedule
-            </Button>
-          </div>
+          <Button className="w-full">Add Property</Button>
         </div>
 
-        {/* Agent Stats Section */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
+          <BarChart3 className="w-12 h-12 text-primary mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Create Transaction
+          </h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Add a new transaction
+          </p>
+          <Link href="/agent/transactions/create">
+            <Button variant="secondary" className="w-full">
+              Add Transaction
+            </Button>
+          </Link>
+        </div>
+
+        <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
+          <Users className="w-12 h-12 text-secondary mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            New Client
+          </h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Register a new client
+          </p>
+          <Button variant="tertiary" className="w-full">
+            Add Client
+          </Button>
+        </div>
+
+        <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
+          <Calendar className="w-12 h-12 text-tertiary mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Schedule Meeting
+          </h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Book a client meeting
+          </p>
+          <Button variant="outline" className="w-full">
+            Schedule
+          </Button>
+        </div>
+      </div>
+
+      {/* Agent Stats Section */}
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {agentStats.map((stat, index) => (
             <div
               key={index}
@@ -240,85 +214,97 @@ export default function AgentDashboard() {
           ))}
         </div> */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Transactions */}
-          <div className="bg-card rounded-lg border border-border">
-            <div className="p-6 border-b border-border">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-foreground font-secondary">
-                  Recent Transactions
-                </h2>
-                <Button variant="outline" size="sm">
-                  View All
-                </Button>
-              </div>
-            </div>
-            <div className="p-6 space-y-4">
-              {agentTransactions.map((transaction) => (
-                <TransactionCard
-                  key={transaction.id}
-                  transaction={transaction}
-                  userRole="agent"
-                  onViewDetails={handleViewDetails}
-                />
-              ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Transactions */}
+        <div className="bg-card rounded-lg border border-border">
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground font-secondary">
+                Recent Transactions
+              </h2>
+              <Button variant="outline" size="sm">
+                View All
+              </Button>
             </div>
           </div>
+          <div className="p-6 space-y-4">
+            {agentTransactions.map((transaction) => (
+              <TransactionCard
+                key={transaction.id}
+                transaction={{
+                  transactionId: transaction.id,
+                  propertyAddress: transaction.propertyTitle,
+                  transactionType: "Sale", // Example value, adjust as needed
+                  status: transaction.status,
+                  additionalNotes: null, // Example value, adjust as needed
+                  propertyValue: 0, // Example value, adjust as needed
+                  clientName: transaction.clientName,
+                  completedWorkflowItems: transaction.completedTasks,
+                  totalWorkflowItems: transaction.totalTasks,
+                  nextIncompleteItemDate: transaction.nextDeadline,
+                  createdAt: transaction.startDate,
+                  updatedAt: new Date().toISOString(), // Example value, adjust as needed
+                }}
+                userRole="agent"
+                onViewDetails={handleViewDetails}
+              />
+            ))}
+          </div>
+        </div>
 
-          {/* Recent Clients */}
-          <div className="bg-card rounded-lg border border-border">
-            <div className="p-6 border-b border-border">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-foreground font-secondary">
-                  Recent Clients
-                </h2>
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Client
-                </Button>
-              </div>
+        {/* Recent Clients */}
+        <div className="bg-card rounded-lg border border-border">
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground font-secondary">
+                Recent Clients
+              </h2>
+              <Button variant="outline" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Client
+              </Button>
             </div>
-            <div className="p-6 space-y-4">
-              {recentClients.map((client) => (
-                <div
-                  key={client.id}
-                  className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">
-                      {client.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {client.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Last contact: {client.lastContact}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        client.status === "active"
-                          ? "bg-accent/20 text-accent"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {client.status}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleContactClient(client.id)}
-                    >
-                      <Phone className="w-4 h-4" />
-                    </Button>
-                  </div>
+          </div>
+          <div className="p-6 space-y-4">
+            {recentClients.map((client) => (
+              <div
+                key={client.id}
+                className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
+              >
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground">
+                    {client.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {client.email}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Last contact: {client.lastContact}
+                  </p>
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center space-x-2">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${
+                      client.status === "active"
+                        ? "bg-accent/20 text-accent"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {client.status}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleContactClient(client.id)}
+                  >
+                    <Phone className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
