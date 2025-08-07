@@ -6,7 +6,7 @@ import { auth0 } from "@/lib/auth0";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    if (!body.esign_name || !body.esign_initials) {
+    if (!body.esign_name || !body.esign_initials || !body.phone_number) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     const result = await ApiServerClient.post(ENDPOINTS.api.AGENT_PROFILE, {
       esign_name: body.esign_name,
       esign_initials: body.esign_initials,
+      phone_number: body.phone_number,
       license_number: body.license_number,
     });
 

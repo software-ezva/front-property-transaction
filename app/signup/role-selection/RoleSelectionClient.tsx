@@ -17,6 +17,7 @@ interface FormData {
   role: UserRole;
   esign_name: string;
   esign_initials: string;
+  phone_number: string;
   license_number?: string;
   date_of_birth?: string;
 }
@@ -29,6 +30,7 @@ export default function RoleSelectionClient() {
     role: null,
     esign_name: "",
     esign_initials: "",
+    phone_number: "",
     license_number: "",
     date_of_birth: "",
   });
@@ -51,6 +53,10 @@ export default function RoleSelectionClient() {
       newErrors.esign_initials = "E-signature initials are required";
     } else if (formData.esign_initials.length > 4) {
       newErrors.esign_initials = "Initials should be 4 characters or less";
+    }
+
+    if (!formData.phone_number.trim()) {
+      newErrors.phone_number = "Phone number is required";
     }
 
     if (formData.role === "realestateagent") {
@@ -88,18 +94,24 @@ export default function RoleSelectionClient() {
         payload = {
           esign_name: formData.esign_name,
           esign_initials: formData.esign_initials,
-          license_number: formData.license_number,
+          phone_number: formData.phone_number,
         };
+        // Only include license_number if it has a value
+        if (formData.license_number && formData.license_number.trim()) {
+          payload.license_number = formData.license_number;
+        }
       } else if (formData.role === "client") {
         endpoint = ENDPOINTS.internal.CLIENT_PROFILE;
         payload = {
           esign_name: formData.esign_name,
           esign_initials: formData.esign_initials,
+          phone_number: formData.phone_number,
           date_of_birth: formData.date_of_birth,
         };
       } else {
         throw new Error("Invalid role");
       }
+
       // Always use the internal ApiClientSide route for both roles
       const res = await apiClient.post(endpoint, payload);
 
@@ -244,6 +256,18 @@ export default function RoleSelectionClient() {
                 error={errors.esign_initials}
                 placeholder="e.g., JD"
                 maxLength={4}
+                required
+              />
+
+              <Input
+                label="Phone Number"
+                type="tel"
+                value={formData.phone_number}
+                onChange={(e) =>
+                  handleInputChange("phone_number", e.target.value)
+                }
+                error={errors.phone_number}
+                placeholder="Enter phone number (e.g., +15552234567)"
                 required
               />
 

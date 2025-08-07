@@ -6,7 +6,12 @@ import { auth0 } from "@/lib/auth0";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    if (!body.esign_name || !body.esign_initials || !body.date_of_birth) {
+    if (
+      !body.esign_name ||
+      !body.esign_initials ||
+      !body.phone_number ||
+      !body.date_of_birth
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -17,6 +22,7 @@ export async function POST(req: NextRequest) {
     const result = await ApiServerClient.post(ENDPOINTS.api.CLIENT_PROFILE, {
       esign_name: body.esign_name,
       esign_initials: body.esign_initials,
+      phone_number: body.phone_number,
       date_of_birth: body.date_of_birth,
     });
     // Get current session (App Router style)
