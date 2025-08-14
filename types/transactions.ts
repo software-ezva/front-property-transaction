@@ -1,11 +1,12 @@
 export enum TransactionStatus {
-  IN_PREPARATION = 'in_preparation',
-  ACTIVE = 'active',
-  UNDER_CONTRACT = 'under_contract',
-  SOLD_LEASED = 'sold_leased',
-  TERMINATED = 'terminated',
-  WITHDRAWN = 'withdrawn',
+  IN_PREPARATION = "in_preparation",
+  ACTIVE = "active",
+  UNDER_CONTRACT = "under_contract",
+  SOLD_LEASED = "sold_leased",
+  TERMINATED = "terminated",
+  WITHDRAWN = "withdrawn",
 }
+
 export interface Transaction {
   transactionId: string;
   transactionType: string;
@@ -19,4 +20,11 @@ export interface Transaction {
   totalWorkflowItems: number;
   completedWorkflowItems: number;
   nextIncompleteItemDate: string | null;
+  // Additional fields from API
+  propertyPrice?: number;
+  propertySize?: number;
+  propertyBedrooms?: number;
+  propertyBathrooms?: number;
+  clientEmail?: string;
+  clientPhoneNumber?: string;
 }
