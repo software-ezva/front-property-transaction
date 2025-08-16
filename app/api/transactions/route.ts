@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
 
   const payload: any = {
     propertyId: body.propertyId,
-    transactionType: body.transactionType,
+    workflowTemplateId: body.workflowTemplateId,
   };
 
   if (body.clientId && body.clientId !== "") {
