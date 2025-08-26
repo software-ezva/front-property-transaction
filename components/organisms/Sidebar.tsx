@@ -5,8 +5,9 @@ import {
   Building2,
   FileText,
   Users,
+  BriefcaseBusiness,
+  Workflow,
   Settings,
-  BarChart3,
 } from "lucide-react";
 import NavigationItem from "../molecules/NavigationItem";
 
@@ -19,11 +20,18 @@ const Sidebar = ({ isCollapsed, profile }: SidebarProps) => {
   const agentNavigation = [
     { href: "/agent/dashboard", icon: Home, label: "Dashboard" },
     { href: "/agent/properties", icon: Building2, label: "Properties" },
-    { href: "/agent/transactions", icon: FileText, label: "Transactions" },
-    { href: "/agent/workflow-templates", icon: FileText, label: "Templates" },
+    {
+      href: "/agent/transactions",
+      icon: BriefcaseBusiness,
+      label: "Transactions",
+    },
+    {
+      href: "/agent/workflow-templates",
+      icon: Workflow,
+      label: "Workflow Templates",
+    },
+    { href: "/agent/document-templates", icon: FileText, label: "Documents" },
     { href: "/agent/clients", icon: Users, label: "Clients" },
-    { href: "/agent/analytics", icon: BarChart3, label: "Analytics" },
-    { href: "/agent/settings", icon: Settings, label: "Settings" },
   ];
 
   const clientNavigation = [

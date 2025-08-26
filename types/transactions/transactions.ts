@@ -1,8 +1,14 @@
-export interface PatchTransaction {
+export interface TransactionUpdatePayload {
   status?: string;
   clientId?: string;
   additionalNotes?: string;
 }
+
+export interface ItemUpdatePayload {
+  status?: string;
+  expectClosingDate?: string;
+}
+
 export enum TransactionStatus {
   IN_PREPARATION = "in_preparation",
   ACTIVE = "active",

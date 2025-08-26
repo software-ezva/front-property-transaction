@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ItemStatus, UpdateItemResponse } from "@/types/workflow";
 import { ApiServerClient } from "@/lib/api-server";
+import { ENDPOINTS } from "@/lib/constants";
 
 // PUT /api/transactions/[transactionId]/workflow/items/[itemId]
-export async function PUT(
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ transactionId: string; itemId: string }> }
 ) {
@@ -49,10 +50,9 @@ export async function PUT(
       updates.expectClosingDate = null;
     }
 
-    console.log(updates);
     // Call the real API using PATCH method
     const result = await ApiServerClient.patch<UpdateItemResponse>(
-      `/transactions/${transactionId}/workflow/items/${itemId}`,
+      `${ENDPOINTS.api.TRANSACTIONS}/${transactionId}/workflow/items/${itemId}`,
       updates
     );
 

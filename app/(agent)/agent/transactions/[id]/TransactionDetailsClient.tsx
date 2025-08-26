@@ -20,6 +20,13 @@ import {
 } from "lucide-react";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import ProgressBar from "@/components/atoms/ProgressBar";
 import Link from "next/link";
 import { useAgentAuth } from "@/hooks/use-agent-auth";
@@ -27,7 +34,13 @@ import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/molecules/PageTitle";
 import WorkflowTimeline from "@/components/organisms/WorkflowTimeline";
 import { Transaction, TransactionStatus } from "@/types/transactions";
+import type {
+  TransactionUpdatePayload,
+  ItemUpdatePayload,
+} from "@/types/transactions/transactions";
 import { ItemStatus, Item, Checklist, Workflow } from "@/types/workflow";
+import { ENDPOINTS } from "@/lib/constants";
+import { apiClient } from "@/lib/api-internal";
 
 interface TransactionDetailsClientProps {
   transactionId: string;
@@ -49,20 +62,17 @@ export default function TransactionDetailsClient({
     "overview" | "timeline" | "documents"
   >("overview");
   const [showStats, setShowStats] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   // Fetch transaction data from API
   useEffect(() => {
     const fetchTransaction = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/transactions/${transactionId}`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch transaction");
-        }
-
-        const data = await response.json();
-        setTransaction(data);
+        const response = await apiClient.get<Transaction>(
+          `${ENDPOINTS.internal.TRANSACTIONS}/${transactionId}`
+        );
+        setTransaction(response);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -80,16 +90,10 @@ export default function TransactionDetailsClient({
     try {
       setWorkflowLoading(true);
       setWorkflowError(null);
-      const response = await fetch(
-        `/api/transactions/${transactionId}/workflow`
+      const response = await apiClient.get<Workflow>(
+        `${ENDPOINTS.internal.TRANSACTIONS}/${transactionId}/workflow`
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch workflow");
-      }
-
-      const data = await response.json();
-      setWorkflow(data);
+      setWorkflow(response);
     } catch (err) {
       setWorkflowError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -106,7 +110,10 @@ export default function TransactionDetailsClient({
   };
 
   // Handler for updating workflow items
-  const handleUpdateItem = async (itemId: string, updates: Partial<Item>) => {
+  const handleUpdateItem = async (
+    itemId: string,
+    itemUpdates: ItemUpdatePayload
+  ) => {
     if (!transaction) {
       toast({
         title: "Error",
@@ -117,84 +124,42 @@ export default function TransactionDetailsClient({
     }
 
     try {
-      const response = await fetch(
-        `/api/transactions/${transaction.transactionId}/workflow/items/${itemId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updates),
-        }
+      const response = await apiClient.patch<Item>(
+        `${ENDPOINTS.internal.TRANSACTIONS}/${transaction.transactionId}/workflow/items/${itemId}`,
+        itemUpdates
       );
-
-      if (!response.ok) {
-        // Try to extract the error message from the response
-        let errorMessage = "Failed to update item";
-        try {
-          const errorData = await response.json();
-          if (errorData.error) {
-            errorMessage = errorData.error;
-          } else if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-        } catch {
-          // If we can't parse the response, use the default message
-        }
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Update the local state with the new data
-        if (workflow) {
-          const updatedWorkflow = {
-            ...workflow,
-            checklists: workflow.checklists.map((checklist) => ({
-              ...checklist,
-              items: checklist.items.map((item) =>
-                item.id === itemId ? { ...item, ...updates } : item
-              ),
-            })),
-          };
-          setWorkflow(updatedWorkflow);
-        }
-
-        // Show success notification with specific message
-        const updatedFields = result.updatedFields || Object.keys(updates);
-        const getFieldDisplayName = (field: string) => {
-          switch (field) {
-            case "status":
-              return "status";
-            case "expectClosingDate":
-              return "due date";
-            default:
-              return field;
-          }
+      // Update the local state with the new data
+      if (workflow) {
+        const updatedWorkflow: Workflow = {
+          ...workflow,
+          checklists: workflow.checklists.map((checklist) => ({
+            ...checklist,
+            items: checklist.items.map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    ...itemUpdates,
+                    status:
+                      typeof itemUpdates.status !== "undefined"
+                        ? (itemUpdates.status as ItemStatus)
+                        : item.status,
+                  }
+                : item
+            ),
+          })),
         };
-
-        const fieldNames = updatedFields.map(getFieldDisplayName).join(" and ");
-        const description =
-          updatedFields.length === 1
-            ? `Task ${fieldNames} updated successfully.`
-            : `Task ${fieldNames} updated successfully.`;
-
-        toast({
-          title: "Task updated",
-          description,
-          variant: "default",
-        });
+        setWorkflow(updatedWorkflow);
       }
+      toast({
+        title: "Task updated",
+        variant: "default",
+      });
     } catch (error) {
       console.error("Error updating item:", error);
-
-      // Extract the actual error message
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Failed to update task. Please try again.";
-
       toast({
         title: "Error",
         description: errorMessage,
@@ -202,11 +167,6 @@ export default function TransactionDetailsClient({
       });
     }
   };
-
-  // Si llegamos aquí, ya sabemos que la autenticación fue exitosa gracias al layout
-  if (!agentUser || !agentProfile) {
-    return <div>Loading user data...</div>;
-  }
 
   if (loading) {
     return (
@@ -235,6 +195,55 @@ export default function TransactionDetailsClient({
     [TransactionStatus.WITHDRAWN]: "error" as const,
   };
 
+  const statusOptions = [
+    { value: TransactionStatus.IN_PREPARATION, label: "In Preparation" },
+    { value: TransactionStatus.ACTIVE, label: "Active" },
+    { value: TransactionStatus.UNDER_CONTRACT, label: "Under Contract" },
+    { value: TransactionStatus.SOLD_LEASED, label: "Sold/Leased" },
+    { value: TransactionStatus.TERMINATED, label: "Terminated" },
+    { value: TransactionStatus.WITHDRAWN, label: "Withdrawn" },
+  ];
+
+  // General transaction update handler
+  const handleTransactionUpdate = async (
+    txUpdates: TransactionUpdatePayload
+  ) => {
+    if (!transaction) return;
+    setStatusUpdating(true);
+    try {
+      await apiClient.patch(
+        `${ENDPOINTS.internal.TRANSACTIONS}/${transactionId}`,
+        { transactionId: transaction.transactionId, ...txUpdates }
+      );
+      setTransaction({ ...transaction, ...txUpdates });
+      toast({
+        title: "Transaction updated",
+        description:
+          Object.keys(txUpdates).length === 1
+            ? `Field '${Object.keys(txUpdates)[0]}' updated successfully.`
+            : `Transaction updated successfully.`,
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update transaction.",
+        variant: "destructive",
+      });
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
+  // Mantener compatibilidad con el dropdown de status
+  const handleStatusChange = (newStatus: string) => {
+    if (!transaction || transaction.status === newStatus) return;
+    handleTransactionUpdate({ status: newStatus });
+  };
+
   const progress =
     (transaction.completedWorkflowItems / transaction.totalWorkflowItems) * 100;
 
@@ -257,18 +266,40 @@ export default function TransactionDetailsClient({
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge
-            variant={
-              statusVariant[transaction.status as keyof typeof statusVariant] ||
-              "default"
-            }
+          <Select
+            value={transaction.status}
+            onValueChange={handleStatusChange}
+            disabled={statusUpdating}
           >
-            {transaction.status.replace("_", " ").toUpperCase()}
-          </Badge>
-          <Button variant="outline" size="sm">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
-          </Button>
+            <SelectTrigger className="w-[170px] h-8 px-2 py-0 border-none bg-transparent shadow-none">
+              <Badge
+                variant={
+                  statusVariant[
+                    transaction.status as keyof typeof statusVariant
+                  ] || "default"
+                }
+                className="w-full justify-between cursor-pointer px-3 py-1 text-xs font-semibold"
+              >
+                <SelectValue>
+                  {statusOptions
+                    .find((opt) => opt.value === transaction.status)
+                    ?.label.toUpperCase()}
+                </SelectValue>
+                {statusUpdating && (
+                  <span className="ml-2 animate-pulse text-xs text-muted-foreground">
+                    ...
+                  </span>
+                )}
+              </Badge>
+            </SelectTrigger>
+            <SelectContent className="min-w-[170px]">
+              {statusOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

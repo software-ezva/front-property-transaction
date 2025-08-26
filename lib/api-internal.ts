@@ -1,7 +1,3 @@
-/**
- * Cliente para llamadas a API routes internas con manejo automático de errores
- */
-
 interface ApiResponse<T = any> {
   data?: T;
   error?: string;
@@ -10,7 +6,7 @@ interface ApiResponse<T = any> {
 }
 
 interface FetchOptions extends RequestInit {
-  showError?: boolean; // Por defecto true
+  showError?: boolean; 
   errorTitle?: string;
 }
 
@@ -26,9 +22,6 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Función helper para hacer llamadas fetch con manejo automático de errores
- */
 export async function apiFetch<T = any>(
   url: string,
   options: FetchOptions = {}
@@ -47,19 +40,14 @@ export async function apiFetch<T = any>(
     const data: ApiResponse<T> = await response.json();
 
     if (!response.ok) {
-      const error = new ApiError(
-        data.error || "Ha ocurrido un error",
-        response.status,
-        data.details
-      );
+      const backendMessage =
+        data.error || data.details || "Ha ocurrido un error";
+      const error = new ApiError(backendMessage, response.status, data.details);
 
-      // Si showError es true, el error se mostrará automáticamente
-      // a través del ErrorBoundary o el hook useErrorNotification
       if (showError) {
-        // Dispatch custom event para que el ErrorBoundary lo capture
         window.dispatchEvent(
           new CustomEvent("api-error", {
-            detail: { error, title: errorTitle },
+            detail: { error, title: errorTitle, backendMessage },
           })
         );
       }
@@ -73,7 +61,6 @@ export async function apiFetch<T = any>(
       throw error;
     }
 
-    // Error de red u otro tipo
     const networkError = new ApiError(
       "Error de conexión. Por favor, intenta nuevamente.",
       0,
@@ -92,9 +79,6 @@ export async function apiFetch<T = any>(
   }
 }
 
-/**
- * Helpers para métodos HTTP específicos
- */
 export const apiClient = {
   get: <T = any>(url: string, options?: FetchOptions) =>
     apiFetch<T>(url, { ...options, method: "GET" }),
