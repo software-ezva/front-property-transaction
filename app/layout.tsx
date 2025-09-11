@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata, Viewport } from "next";
-import "./globals.css";
+import "../styles/globals.css";
 import AuthRedirect from "./_auth-redirect";
 import { ErrorNotificationProvider } from "@/hooks/use-error-notification";
 import { Toaster } from "@/components/ui/toaster";
