@@ -2,9 +2,6 @@
  * Constantes de la aplicación
  */
 
-import { LogIn } from "lucide-react";
-import { auth0 } from "./auth0";
-
 export const ENDPOINTS = {
   api: {
     AGENT_PROFILE: "/agents",
@@ -12,6 +9,8 @@ export const ENDPOINTS = {
     TRANSACTIONS: "/transactions",
     PROPERTIES: "/properties",
     TEMPLATES: "/templates",
+    DOCUMENTS: "/documents",
+    DOCUMENT_TEMPLATES: "/document-templates",
   },
   internal: {
     AGENT_PROFILE: "/api/agents",
@@ -19,6 +18,8 @@ export const ENDPOINTS = {
     TRANSACTIONS: "/api/transactions",
     PROPERTIES: "/api/properties",
     TEMPLATES: "/api/templates",
+    DOCUMENTS: "/api/documents",
+    DOCUMENT_TEMPLATES: "/api/document-templates",
   },
 
   HEALTH_CHECK: "health",

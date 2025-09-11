@@ -1,21 +1,11 @@
 "use client";
 
-import {
-  BarChart3,
-  Building2,
-  Users,
-  FileText,
-  TrendingUp,
-  DollarSign,
-  Plus,
-  Calendar,
-  Phone,
-} from "lucide-react";
-import TransactionCard from "@/components/molecules/TransactionCard";
+import { BarChart3, Building2, Users, Calendar } from "lucide-react";
 import Button from "@/components/atoms/Button";
 import { useAgentAuth } from "@/hooks/use-agent-auth";
 import Link from "next/link";
 import PageTitle from "@/components/molecules/PageTitle";
+import UpcomingTasks from "@/components/organisms/UpcomingTasks";
 
 export default function AgentDashboard() {
   const { agentUser, agentProfile } = useAgentAuth();
@@ -27,89 +17,6 @@ export default function AgentDashboard() {
     // Esto no debería pasar si el layout funciona correctamente
     return <div>Loading user data...</div>;
   }
-
-  const agentStats = [
-    {
-      title: "Active Properties",
-      value: "24",
-      icon: Building2,
-      change: "+12%",
-      changeType: "positive" as const,
-    },
-    {
-      title: "Ongoing Transactions",
-      value: "8",
-      icon: FileText,
-      change: "+5%",
-      changeType: "positive" as const,
-    },
-    {
-      title: "Active Clients",
-      value: "156",
-      icon: Users,
-      change: "+18%",
-      changeType: "positive" as const,
-    },
-    {
-      title: "Monthly Revenue",
-      value: "$45,200",
-      icon: DollarSign,
-      change: "+23%",
-      changeType: "positive" as const,
-    },
-  ];
-
-  const agentTransactions = [
-    {
-      id: "1",
-      propertyTitle: "Modern downtown apartment",
-      clientName: "Carlos Rodriguez",
-      agentName: "Ana Garcia",
-      status: "in-progress" as const,
-      startDate: "2024-01-15",
-      completedTasks: 8,
-      totalTasks: 12,
-      nextDeadline: "2024-02-01",
-    },
-    {
-      id: "2",
-      propertyTitle: "Family house with garden",
-      clientName: "Maria Lopez",
-      agentName: "Ana Garcia",
-      status: "pending" as const,
-      startDate: "2024-01-20",
-      completedTasks: 3,
-      totalTasks: 15,
-      nextDeadline: "2024-01-25",
-    },
-  ];
-
-  const recentClients = [
-    {
-      id: "1",
-      name: "Carlos Rodriguez",
-      email: "carlos@email.com",
-      phone: "+1 (555) 123-4567",
-      status: "active",
-      lastContact: "2024-01-20",
-    },
-    {
-      id: "2",
-      name: "Maria Lopez",
-      email: "maria@email.com",
-      phone: "+1 (555) 987-6543",
-      status: "prospect",
-      lastContact: "2024-01-18",
-    },
-  ];
-
-  const handleViewDetails = (id: string) => {
-    console.log("View details:", id);
-  };
-
-  const handleContactClient = (clientId: string) => {
-    console.log("Contact client:", clientId);
-  };
 
   return (
     <div className="space-y-6">
@@ -214,97 +121,8 @@ export default function AgentDashboard() {
           ))}
         </div> */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Transactions */}
-        <div className="bg-card rounded-lg border border-border">
-          <div className="p-6 border-b border-border">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground font-secondary">
-                Recent Transactions
-              </h2>
-              <Button variant="outline" size="sm">
-                View All
-              </Button>
-            </div>
-          </div>
-          <div className="p-6 space-y-4">
-            {agentTransactions.map((transaction) => (
-              <TransactionCard
-                key={transaction.id}
-                transaction={{
-                  transactionId: transaction.id,
-                  propertyAddress: transaction.propertyTitle,
-                  transactionType: "Sale", // Example value, adjust as needed
-                  status: transaction.status,
-                  additionalNotes: null, // Example value, adjust as needed
-                  propertyValue: 0, // Example value, adjust as needed
-                  clientName: transaction.clientName,
-                  completedWorkflowItems: transaction.completedTasks,
-                  totalWorkflowItems: transaction.totalTasks,
-                  nextIncompleteItemDate: transaction.nextDeadline,
-                  createdAt: transaction.startDate,
-                  updatedAt: new Date().toISOString(), // Example value, adjust as needed
-                }}
-                userRole="agent"
-                onViewDetails={handleViewDetails}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Clients */}
-        <div className="bg-card rounded-lg border border-border">
-          <div className="p-6 border-b border-border">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground font-secondary">
-                Recent Clients
-              </h2>
-              <Button variant="outline" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Client
-              </Button>
-            </div>
-          </div>
-          <div className="p-6 space-y-4">
-            {recentClients.map((client) => (
-              <div
-                key={client.id}
-                className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
-              >
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">
-                    {client.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {client.email}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Last contact: {client.lastContact}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      client.status === "active"
-                        ? "bg-accent/20 text-accent"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {client.status}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleContactClient(client.id)}
-                  >
-                    <Phone className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Upcoming Tasks Section */}
+      <UpcomingTasks />
     </div>
   );
 }

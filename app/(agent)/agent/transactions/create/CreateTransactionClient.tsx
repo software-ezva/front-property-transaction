@@ -9,6 +9,7 @@ import Button from "@/components/atoms/Button";
 import Link from "next/link";
 
 import { useAgentAuth } from "@/hooks/use-agent-auth";
+import { useTransactions } from "@/hooks/use-transactions";
 import PageTitle from "@/components/molecules/PageTitle";
 import ReturnTo from "@/components/molecules/ReturnTo";
 import { ENDPOINTS } from "@/lib/constants";
@@ -20,6 +21,9 @@ import type {
 } from "@/types/workflow-templates";
 
 export default function CreateTransactionClient() {
+  const { createTransaction } = useTransactions();
+  const router = useRouter();
+
   // State hooks (only one declaration each, in logical order)
   const [properties, setProperties] = useState<any[]>([]);
   const [loadingProperties, setLoadingProperties] = useState(true);
@@ -40,7 +44,7 @@ export default function CreateTransactionClient() {
 
   // Load templates on mount
   useEffect(() => {
-    fetch("/api/templates")
+    fetch(ENDPOINTS.internal.TEMPLATES)
       .then((res) => res.json())
       .then((data) => setTemplates(data))
       .catch(() => setTemplates([]));
@@ -60,7 +64,7 @@ export default function CreateTransactionClient() {
       setSelectedTemplateId("");
     }
   }, [formData.transactionType, templates]);
-  const router = useRouter();
+
   const { agentUser, agentProfile } = useAgentAuth();
 
   // If we reach here, authentication was successful thanks to the layout
@@ -108,9 +112,7 @@ export default function CreateTransactionClient() {
   const selectedProperty = properties.find(
     (p) => String(p.id) === formData.propertyId
   );
-  const selectedClient = clients.find(
-    (c) => c.id === Number(formData.clientId)
-  );
+  const selectedClient = clients.find((c) => c.id === formData.clientId);
 
   const validateForm = (): boolean => {
     if (!formData.propertyId) {
@@ -130,16 +132,12 @@ export default function CreateTransactionClient() {
       const payload = {
         propertyId: formData.propertyId,
         workflowTemplateId: selectedTemplateId,
-        clientId: formData.clientId ? formData.clientId : undefined,
-        additionalNotes: formData.notes,
+        clientId: formData.clientId || undefined,
+        additionalNotes: formData.notes || undefined,
       };
 
-      const data = await apiClient.post(
-        ENDPOINTS.internal.TRANSACTIONS,
-        payload
-      );
-
-      router.push(`/agent/transactions/${data.transactionId}`);
+      const result = await createTransaction(payload);
+      router.push(`/agent/transactions/${result.transactionId}`);
     } catch (error) {
       // Error is automatically shown as toast
       console.error("Error creating transaction:", error);

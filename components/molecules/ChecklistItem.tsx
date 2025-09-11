@@ -63,15 +63,17 @@ export default function ChecklistItem({
         {/* Status badge */}
         {getStatusBadge(item.status)}
 
-        {/* Edit button - only visible on hover */}
-        <Button
-          variant="primary"
-          size="sm"
-          className="h-5 px-1.5"
-          onClick={() => onEdit?.(item.id)}
-        >
-          <Edit className="w-3 h-3" />
-        </Button>
+        {/* Edit button - only visible on hover and when editing is allowed */}
+        {onEdit && (
+          <Button
+            variant="primary"
+            size="sm"
+            className="h-5 px-1.5 "
+            onClick={() => onEdit(item.id)}
+          >
+            <Edit className="w-3 h-3" />
+          </Button>
+        )}
       </div>
     </div>
   );

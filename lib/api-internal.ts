@@ -6,7 +6,7 @@ interface ApiResponse<T = any> {
 }
 
 interface FetchOptions extends RequestInit {
-  showError?: boolean; 
+  showError?: boolean;
   errorTitle?: string;
 }
 
@@ -29,11 +29,19 @@ export async function apiFetch<T = any>(
   const { showError = true, errorTitle = "Error", ...fetchOptions } = options;
 
   try {
+    // Configurar headers - no incluir Content-Type para FormData
+    const isFormData = fetchOptions.body instanceof FormData;
+    const headers: Record<string, string> = {
+      ...(fetchOptions.headers as Record<string, string>),
+    };
+
+    // Solo agregar Content-Type si no es FormData
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
+
     const response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...fetchOptions.headers,
-      },
+      headers,
       ...fetchOptions,
     });
 
@@ -94,14 +102,24 @@ export const apiClient = {
     apiFetch<T>(url, {
       ...options,
       method: "PUT",
-      body: data ? JSON.stringify(data) : undefined,
+      body:
+        data instanceof FormData
+          ? data
+          : data
+          ? JSON.stringify(data)
+          : undefined,
     }),
 
   patch: <T = any>(url: string, data?: any, options?: FetchOptions) =>
     apiFetch<T>(url, {
       ...options,
       method: "PATCH",
-      body: data ? JSON.stringify(data) : undefined,
+      body:
+        data instanceof FormData
+          ? data
+          : data
+          ? JSON.stringify(data)
+          : undefined,
     }),
 
   delete: <T = any>(url: string, options?: FetchOptions) =>

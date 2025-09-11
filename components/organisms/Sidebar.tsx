@@ -36,9 +36,8 @@ const Sidebar = ({ isCollapsed, profile }: SidebarProps) => {
 
   const clientNavigation = [
     { href: "/client/dashboard", icon: Home, label: "Dashboard" },
-    { href: "/client/properties", icon: Building2, label: "Properties" },
     { href: "/client/transactions", icon: FileText, label: "My Transactions" },
-    { href: "/client/settings", icon: Settings, label: "Settings" },
+    { href: "/client/agents", icon: Users, label: "My Agents" },
   ];
 
   const navigationConfig: Record<string, typeof agentNavigation> = {

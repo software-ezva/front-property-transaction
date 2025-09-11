@@ -132,9 +132,11 @@ export default function WorkflowTimeline({
                         key={item.id}
                         item={item}
                         isEditing={editingItemId === item.id}
-                        onEdit={handleEditItem}
-                        onSave={handleSaveItem}
-                        onCancelEdit={handleCancelEdit}
+                        onEdit={onUpdateItem ? handleEditItem : undefined}
+                        onSave={onUpdateItem ? handleSaveItem : undefined}
+                        onCancelEdit={
+                          onUpdateItem ? handleCancelEdit : undefined
+                        }
                         getStatusIcon={getStatusIcon}
                         getStatusBadge={getStatusBadge}
                         formatDate={formatDate}

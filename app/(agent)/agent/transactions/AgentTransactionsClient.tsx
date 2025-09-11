@@ -8,40 +8,25 @@ import { TransactionStatus } from "@/types/transactions";
 import Input from "@/components/atoms/Input";
 import Button from "@/components/atoms/Button";
 import { useAgentAuth } from "@/hooks/use-agent-auth";
+import { useTransactions } from "@/hooks/use-transactions";
 import PageTitle from "@/components/molecules/PageTitle";
 import type { Transaction } from "@/types/transactions";
 
 export default function AgentTransactionsClient() {
   const { agentUser, agentProfile } = useAgentAuth();
+  const {
+    transactions,
+    loading: loadingTransactions,
+    error,
+  } = useTransactions();
 
-  // Si llegamos aquí, ya sabemos que la autenticación fue exitosa gracias al layout
+  // If we get here, we already know authentication was successful thanks to the layout
   if (!agentUser || !agentProfile) {
     return <div>Loading user data...</div>;
   }
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      setLoadingTransactions(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/transactions");
-        if (!res.ok) throw new Error("Failed to fetch transactions");
-        const data: Transaction[] = await res.json();
-        setTransactions(data);
-      } catch (err: any) {
-        setError(err.message || "Unknown error");
-      } finally {
-        setLoadingTransactions(false);
-      }
-    };
-    fetchTransactions();
-  }, []);
 
   // Filtrado
   const filteredTransactions = transactions.filter((transaction) => {

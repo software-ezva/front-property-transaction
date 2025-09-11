@@ -28,6 +28,9 @@ interface DocumentTemplateSelectorProps {
   onTemplateToggle: (templateId: string) => void;
   onAddSelected: () => void;
   loading?: boolean;
+  templatesLoading?: boolean;
+  templatesError?: string | null;
+  onRetryTemplates?: () => void;
 }
 
 const formatDate = (date: Date) => {
@@ -48,6 +51,9 @@ export default function DocumentTemplateSelector({
   onTemplateToggle,
   onAddSelected,
   loading = false,
+  templatesLoading = false,
+  templatesError = null,
+  onRetryTemplates,
 }: DocumentTemplateSelectorProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -142,7 +148,32 @@ export default function DocumentTemplateSelector({
               {/* Templates List */}
               <div className="border border-border rounded-lg overflow-hidden">
                 <div className="max-h-96 overflow-y-auto">
-                  {filteredTemplates.length > 0 ? (
+                  {templatesLoading ? (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      <span className="ml-3 text-muted-foreground">
+                        Loading templates...
+                      </span>
+                    </div>
+                  ) : templatesError ? (
+                    <div className="flex flex-col items-center justify-center p-8 text-center">
+                      <div className="text-destructive mb-2">
+                        Failed to load templates
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-4">
+                        {templatesError}
+                      </div>
+                      {onRetryTemplates && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={onRetryTemplates}
+                        >
+                          Try Again
+                        </Button>
+                      )}
+                    </div>
+                  ) : filteredTemplates.length > 0 ? (
                     <div className="divide-y divide-border">
                       {filteredTemplates.map((template) => (
                         <div

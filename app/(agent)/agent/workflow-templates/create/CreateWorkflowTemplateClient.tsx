@@ -44,7 +44,7 @@ import {
   type ChecklistItem,
 } from "@/types/workflow-templates";
 import { SortableItem } from "../../../../../components/organisms/SortableItem";
-import { apiClient } from "@/lib/api-internal";
+import { useWorkflowTemplates } from "@/hooks/use-workflow-templates";
 import { ENDPOINTS } from "@/lib/constants";
 
 interface FormData {
@@ -61,6 +61,7 @@ interface FormErrors {
 
 function CreateWorkflowTemplateClient() {
   const router = useRouter();
+  const { createTemplate } = useWorkflowTemplates();
 
   // Only call hooks at the top level, not inside loops or conditionals
   const sensors = useSensors(useSensor(PointerSensor));
@@ -102,10 +103,10 @@ function CreateWorkflowTemplateClient() {
     setErrors({});
 
     try {
-      // Preparar datos para el API - solo enviar campos requeridos
+      // Prepare data for API - only send required fields
       const createData = {
         name: formData.name,
-        transactionType: formData.transactionType,
+        transactionType: formData.transactionType as TransactionType,
         checklistTemplates: formData.checklists.map((checklist, order) => ({
           name: checklist.name,
           description: checklist.description || "",
@@ -117,16 +118,13 @@ function CreateWorkflowTemplateClient() {
         })),
       };
 
-      // El apiClient automáticamente manejará los errores via useErrorNotification
-      const result = await apiClient.post(
-        `${ENDPOINTS.internal.TEMPLATES}`,
-        createData
-      );
+      // The hook automatically handles errors via useErrorNotification
+      await createTemplate(createData);
 
-      // Si llegamos aquí, fue exitoso - redirigir a la lista de templates
+      // If we get here, it was successful - redirect to template list
       router.push("/agent/workflow-templates");
     } catch (error) {
-      // Los errores ya se manejan automáticamente por el sistema de notificaciones
+      // Errors are already handled automatically by the notification system
       console.error("Error creating template:", error);
     } finally {
       setIsSubmitting(false);

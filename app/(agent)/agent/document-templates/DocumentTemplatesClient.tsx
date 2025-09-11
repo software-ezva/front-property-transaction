@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Search,
   Plus,
@@ -17,66 +18,47 @@ import DashboardLayout from "@/components/templates/DashboardLayout";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
 import Input from "@/components/atoms/Input";
+import PageTitle from "@/components/molecules/PageTitle";
+import LoadingState from "@/components/molecules/LoadingState";
+import ErrorState from "@/components/molecules/ErrorState";
+import EmptyState from "@/components/molecules/EmptyState";
+import ConfirmationDialog from "@/components/molecules/ConfirmationDialog";
 import {
   DocumentCategory,
   type DocumentTemplate,
 } from "@/types/document-templates";
-
-const mockDocumentTemplates: DocumentTemplate[] = [
-  {
-    uuid: "dt-1",
-    title: "Purchase Agreement Template",
-    category: DocumentCategory.CONTRACT_AND_NEGOTIATION,
-    url: "/documents/purchase-agreement.pdf",
-    createdAt: new Date("2024-01-15"),
-    updatedAt: new Date("2024-01-20"),
-  },
-  {
-    uuid: "dt-2",
-    title: "Property Disclosure Form",
-    category: DocumentCategory.DISCLOSURE,
-    url: "/documents/disclosure-form.pdf",
-    createdAt: new Date("2024-01-10"),
-    updatedAt: new Date("2024-01-18"),
-  },
-  {
-    uuid: "dt-3",
-    title: "Listing Agreement",
-    category: DocumentCategory.LISTINGS_AND_MARKETING,
-    url: "/documents/listing-agreement.pdf",
-    createdAt: new Date("2024-01-05"),
-    updatedAt: new Date("2024-01-25"),
-  },
-  {
-    uuid: "dt-4",
-    title: "Title Insurance Policy",
-    category: DocumentCategory.TITLE_AND_OWNERSHIP,
-    url: "/documents/title-insurance.pdf",
-    createdAt: new Date("2024-01-12"),
-    updatedAt: new Date("2024-01-22"),
-  },
-  {
-    uuid: "dt-5",
-    title: "Closing Statement",
-    category: DocumentCategory.CLOSING_AND_FINANCING,
-    url: "/documents/closing-statement.pdf",
-    createdAt: new Date("2024-01-08"),
-    updatedAt: new Date("2024-01-15"),
-  },
-];
+import { useDocumentTemplates } from "@/hooks/use-document-templates";
 
 export default function DocumentTemplatesClient() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { templates, loading, error, deleteTemplate } = useDocumentTemplates();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<
     DocumentCategory | "all"
   >("all");
-  const [templates, setTemplates] = useState<DocumentTemplate[]>(
-    mockDocumentTemplates
-  );
   const [selectedTemplate, setSelectedTemplate] =
     useState<DocumentTemplate | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] =
+    useState<DocumentTemplate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Efecto para abrir automáticamente un template específico basado en URL params
+  useEffect(() => {
+    const viewTemplateUuid = searchParams.get("viewTemplate");
+    if (viewTemplateUuid && templates.length > 0) {
+      const templateToView = templates.find(
+        (template) => template.uuid === viewTemplateUuid
+      );
+      if (templateToView) {
+        setSelectedTemplate(templateToView);
+        setIsViewerOpen(true);
+      }
+    }
+  }, [searchParams, templates]);
 
   const filteredTemplates = templates.filter((template) => {
     const matchesSearch = template.title
@@ -93,10 +75,30 @@ export default function DocumentTemplatesClient() {
     setIsViewerOpen(true);
   };
 
-  const handleDelete = (templateUuid: string) => {
-    if (confirm("Are you sure you want to delete this document template?")) {
-      setTemplates(templates.filter((t) => t.uuid !== templateUuid));
+  const handleDeleteClick = (template: DocumentTemplate) => {
+    setTemplateToDelete(template);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!templateToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteTemplate(templateToDelete.uuid);
+      setIsDeleteDialogOpen(false);
+      setTemplateToDelete(null);
+      // State will be updated automatically by the hook
+    } catch (error) {
+      console.error("Error deleting template:", error);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTemplateToDelete(null);
   };
 
   const handleCloseViewer = () => {
@@ -128,12 +130,10 @@ export default function DocumentTemplatesClient() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground font-primary">
-            Document Templates
-          </h1>
-          <p className="text-muted-foreground font-secondary">
-            Manage document templates for real estate transactions
-          </p>
+          <PageTitle
+            title="Document Templates"
+            subtitle="Manage document templates for real estate transactions"
+          />
         </div>
         <Button
           onClick={() =>
@@ -206,26 +206,39 @@ export default function DocumentTemplatesClient() {
       </div>
 
       <div className="space-y-4">
-        {filteredTemplates.length > 0 ? (
+        {loading ? (
+          <LoadingState
+            title="Loading templates..."
+            description="Please wait while we load your document templates."
+            icon={FileText}
+          />
+        ) : error ? (
+          <ErrorState
+            title="Error Loading Templates"
+            error={error}
+            onRetry={() => window.location.reload()}
+            icon={FileText}
+          />
+        ) : filteredTemplates.length > 0 ? (
           <div className="bg-card rounded-lg border border-border">
             <div className="divide-y divide-border">
               {filteredTemplates.map((template) => (
                 <div
                   key={template.uuid}
-                  className="p-4 hover:bg-muted/20 transition-colors"
+                  className="p-3 hover:bg-muted/20 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <FileText className="w-5 h-5 text-muted-foreground" />
-                        <h3 className="text-lg font-semibold text-foreground">
+                      <div className="flex items-center space-x-3 mb-1">
+                        <FileText className="w-6 h-6 text-muted-foreground" />
+                        <h3 className="text-base font-semibold text-foreground">
                           {template.title}
                         </h3>
                         <Badge variant={getCategoryVariant(template.category)}>
                           {template.category}
                         </Badge>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground ml-8">
+                      <div className="flex items-center space-x-3 text-xs text-muted-foreground ml-7">
                         <span>
                           Created {template.createdAt.toLocaleDateString()}
                         </span>
@@ -235,7 +248,7 @@ export default function DocumentTemplatesClient() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -247,9 +260,9 @@ export default function DocumentTemplatesClient() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(template.uuid)}
+                        onClick={() => handleDeleteClick(template)}
                         title="Delete template"
-                        className="text-destructive hover:text-destructive"
+                        className="text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -260,37 +273,34 @@ export default function DocumentTemplatesClient() {
             </div>
           </div>
         ) : (
-          <div className="bg-card rounded-lg p-12 border border-border text-center">
-            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No templates found
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm || categoryFilter !== "all"
+          <EmptyState
+            title="No templates found"
+            description={
+              searchTerm || categoryFilter !== "all"
                 ? "No templates match your current filters."
-                : "Create your first document template to get started."}
-            </p>
-            <Button
-              onClick={() =>
-                (window.location.href = "/agent/document-templates/create")
-              }
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Template
-            </Button>
-          </div>
+                : "Create your first document template to get started."
+            }
+            icon={FileText}
+            actionLabel="Add Template"
+            onAction={() =>
+              (window.location.href = "/agent/document-templates/create")
+            }
+          />
         )}
       </div>
 
       {isViewerOpen && selectedTemplate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg border border-border w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div
+          className="fixed top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-50 px-16 py-10 overflow-hidden"
+          style={{ margin: 0 }}
+        >
+          <div className="bg-card rounded-lg border border-border w-full h-full max-w-[98vw] max-h-[98vh] flex flex-col shadow-2xl">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border">
+            <div className="flex items-center justify-between p-4 lg:p-6 border-b border-border bg-card rounded-t-lg flex-shrink-0">
               <div className="flex items-center space-x-3">
-                <FileText className="w-6 h-6 text-muted-foreground" />
+                <FileText className="w-6 h-6 text-primary" />
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">
+                  <h2 className="text-xl lg:text-2xl font-semibold text-foreground">
                     {selectedTemplate.title}
                   </h2>
                   <Badge
@@ -301,40 +311,45 @@ export default function DocumentTemplatesClient() {
                   </Badge>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleCloseViewer}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCloseViewer}
+                className="hover:bg-destructive/10 hover:text-destructive"
+              >
                 <X className="w-5 h-5" />
               </Button>
             </div>
 
             {/* Modal Content */}
-            <div className="flex-1 overflow-hidden flex">
+            <div className="flex-1 overflow-hidden flex min-h-0">
               {/* Document Info Sidebar */}
               <div
                 className={`${
-                  isSidebarCollapsed ? "w-0" : "w-80"
-                } transition-all duration-300 overflow-hidden border-r border-border bg-muted/20`}
+                  isSidebarCollapsed ? "w-0" : "w-72 lg:w-80"
+                } transition-all duration-300 overflow-hidden border-r border-border bg-muted/5`}
               >
-                <div className="w-80 p-6">
-                  <div className="space-y-6">
+                <div className="w-72 lg:w-80 p-3 lg:p-4 h-full overflow-y-auto">
+                  <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center">
-                        <Tag className="w-4 h-4 mr-2" />
+                      <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center">
+                        <Tag className="w-4 h-4 mr-2 text-primary" />
                         Document Details
                       </h3>
-                      <div className="space-y-3">
-                        <div>
+                      <div className="space-y-2">
+                        <div className="bg-muted/20 p-2 rounded-md">
                           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Title
                           </label>
-                          <p className="text-sm text-foreground mt-1">
+                          <p className="text-sm text-foreground mt-1 font-medium">
                             {selectedTemplate.title}
                           </p>
                         </div>
-                        <div>
+                        <div className="bg-muted/20 p-2 rounded-md">
                           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Category
                           </label>
-                          <p className="text-sm text-foreground mt-1">
+                          <p className="text-sm text-foreground mt-1 font-medium">
                             {selectedTemplate.category}
                           </p>
                         </div>
@@ -342,16 +357,16 @@ export default function DocumentTemplatesClient() {
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center">
-                        <Calendar className="w-4 h-4 mr-2" />
+                      <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center">
+                        <Calendar className="w-4 h-4 mr-2 text-primary" />
                         Timeline
                       </h3>
-                      <div className="space-y-3">
-                        <div>
+                      <div className="space-y-2">
+                        <div className="bg-muted/20 p-2 rounded-md">
                           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Created
                           </label>
-                          <p className="text-sm text-foreground mt-1">
+                          <p className="text-sm text-foreground mt-1 font-medium">
                             {selectedTemplate.createdAt.toLocaleDateString(
                               "en-US",
                               {
@@ -362,11 +377,11 @@ export default function DocumentTemplatesClient() {
                             )}
                           </p>
                         </div>
-                        <div>
+                        <div className="bg-muted/20 p-2 rounded-md">
                           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Last Updated
                           </label>
-                          <p className="text-sm text-foreground mt-1">
+                          <p className="text-sm text-foreground mt-1 font-medium">
                             {selectedTemplate.updatedAt.toLocaleDateString(
                               "en-US",
                               {
@@ -379,17 +394,39 @@ export default function DocumentTemplatesClient() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Quick Actions */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center">
+                        <FileText className="w-4 h-4 mr-2 text-primary" />
+                        Actions
+                      </h3>
+                      <div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() =>
+                            selectedTemplate &&
+                            handleDeleteClick(selectedTemplate)
+                          }
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Template
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Document Preview */}
-              <div className="flex-1 p-6 relative">
+              <div className="flex-1 p-4 lg:p-6 relative bg-muted/5">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                  className="absolute top-4 left-4 z-10 bg-card border border-border shadow-sm"
+                  className="absolute top-4 left-4 z-10 bg-background border border-border shadow-md hover:shadow-lg transition-shadow"
                   title={isSidebarCollapsed ? "Show details" : "Hide details"}
                 >
                   {isSidebarCollapsed ? (
@@ -399,18 +436,32 @@ export default function DocumentTemplatesClient() {
                   )}
                 </Button>
 
-                <div className="h-full bg-muted/10 rounded-lg border border-border flex items-center justify-center">
-                  <div className="text-center">
-                    <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                <div className="h-full bg-background rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors flex items-center justify-center">
+                  <div className="text-center max-w-md mx-auto p-8">
+                    <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <FileText className="w-12 h-12 text-primary" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-foreground mb-3">
                       Document Preview
                     </h3>
-                    <p className="text-muted-foreground mb-4">
-                      Preview functionality will be implemented with document
-                      viewer integration
+                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                      Click the button below to open this document in a new tab
+                      for full viewing and interaction.
                     </p>
-                    <div className="text-sm text-muted-foreground">
-                      <p>File URL: {selectedTemplate.url}</p>
+                    <div className="space-y-4">
+                      <Button
+                        onClick={() =>
+                          window.open(selectedTemplate.url, "_blank")
+                        }
+                        className="w-full lg:w-auto px-8 py-3 text-base font-medium"
+                      >
+                        <Eye className="w-5 h-5 mr-2" />
+                        Open Document
+                      </Button>
+                      <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-md">
+                        <p className="font-medium mb-1">File Location:</p>
+                        <p className="break-all">{selectedTemplate.url}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -419,6 +470,24 @@ export default function DocumentTemplatesClient() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Document Template"
+        message={
+          templateToDelete
+            ? `Are you sure you want to permanently delete "${templateToDelete.title}"?\n\nThis action cannot be undone and will remove the template and its associated file from storage.`
+            : ""
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        icon={<Trash2 className="w-6 h-6 text-destructive" />}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

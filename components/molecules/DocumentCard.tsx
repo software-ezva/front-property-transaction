@@ -15,28 +15,35 @@ const getStatusVariant = (status: DocumentStatus) => {
     case DocumentStatus.SIGNED:
       return "success" as const;
     case DocumentStatus.READY:
-      return "default" as const;
+      return "success" as const;
     case DocumentStatus.WAITING:
       return "warning" as const;
     case DocumentStatus.PENDING:
-      return "secondary" as const;
+      return "warning" as const;
     case DocumentStatus.REJECTED:
-      return "destructive" as const;
+      return "error" as const;
     case DocumentStatus.ARCHIVED:
-      return "outline" as const;
+      return "default" as const;
     default:
       return "default" as const;
   }
 };
 
 const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  try {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      return "Invalid date";
+    }
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  } catch (error) {
+    return "Invalid date";
+  }
 };
 
 export default function DocumentCard({

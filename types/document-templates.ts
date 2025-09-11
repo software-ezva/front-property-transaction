@@ -11,10 +11,27 @@ export enum DocumentCategory {
 }
 
 export interface DocumentTemplate {
-  uuid: string
-  title: string
-  category: DocumentCategory
-  url: string
-  createdAt: Date
-  updatedAt: Date
+  uuid: string;
+  title: string;
+  category: DocumentCategory;
+  url: string;
+  isArchived: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateDocumentTemplateRequest {
+  title: string;
+  category: DocumentCategory;
+  file: File;
+}
+
+export interface CreateDocumentTemplateResponse {
+  uuid: string;
+  title: string;
+  category: string;
+  url: string;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

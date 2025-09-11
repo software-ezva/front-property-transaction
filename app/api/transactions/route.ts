@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   };
 
   if (body.clientId && body.clientId !== "") {
-    payload.clientId = Number(body.clientId);
+    payload.clientId = body.clientId;
   }
 
   if (body.additionalNotes && body.additionalNotes.trim() !== "") {

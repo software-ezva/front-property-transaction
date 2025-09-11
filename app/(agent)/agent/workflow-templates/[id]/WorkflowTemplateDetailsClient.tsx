@@ -19,6 +19,8 @@ import {
 import ReturnTo from "@/components/molecules/ReturnTo";
 import PageTitle from "@/components/molecules/PageTitle";
 import { useAgentAuth } from "@/hooks/use-agent-auth";
+import { useWorkflowTemplate } from "@/hooks/use-workflow-templates";
+import { ENDPOINTS } from "@/lib/constants";
 
 export interface WorkflowTemplateDetailsClientProps {
   templateId: string;
@@ -28,53 +30,24 @@ export default function WorkflowTemplateDetailsClient({
   templateId,
 }: WorkflowTemplateDetailsClientProps) {
   const { user, isLoading, error: authError } = useAgentAuth();
+  const {
+    template,
+    loading: loadingTemplate,
+    error,
+  } = useWorkflowTemplate(templateId);
 
   if (isLoading) return <div>Loading...</div>;
   if (authError) return <div>Error loading user data</div>;
   if (!user) return <div>Please log in</div>;
 
   const [expandedChecklists, setExpandedChecklists] = useState<string[]>([]);
-  const [template, setTemplate] = useState<WorkflowTemplate | null>(null);
-  const [loadingTemplate, setLoadingTemplate] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
+  // Initialize expanded checklists when template loads
   useEffect(() => {
-    async function fetchTemplate() {
-      setLoadingTemplate(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/templates/get?id=${templateId}`);
-        if (!res.ok) throw new Error("No se pudo obtener la plantilla");
-        const data = await res.json();
-        //
-        // Accept empty checklistTemplates array as valid
-        if (!data) {
-          setTemplate(null);
-          setExpandedChecklists([]);
-        } else {
-          // checklistTemplates e items siempre arrays
-          const safeTemplate = {
-            ...data,
-            checklistTemplates: Array.isArray(data.checklistTemplates)
-              ? data.checklistTemplates.map((c: any) => ({
-                  ...c,
-                  items: Array.isArray(c.items) ? c.items : [],
-                }))
-              : [],
-          };
-          setTemplate(safeTemplate);
-          setExpandedChecklists(
-            safeTemplate.checklistTemplates.map((c: any) => c.id)
-          );
-        }
-      } catch (err: any) {
-        setError(err.message || "Error al cargar la plantilla");
-      } finally {
-        setLoadingTemplate(false);
-      }
+    if (template?.checklistTemplates) {
+      setExpandedChecklists(template.checklistTemplates.map((c) => c.id));
     }
-    fetchTemplate();
-  }, [templateId]);
+  }, [template]);
 
   // Loading state for template data
   if (loadingTemplate) {

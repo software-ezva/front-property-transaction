@@ -11,6 +11,9 @@ import {
 import Button from "@/components/atoms/Button";
 import DocumentCard from "@/components/molecules/DocumentCard";
 import Stats from "@/components/molecules/Stats";
+import LoadingState from "@/components/molecules/LoadingState";
+import ErrorState from "@/components/molecules/ErrorState";
+import EmptyState from "@/components/molecules/EmptyState";
 import { StatItemData } from "@/components/atoms/StatItem";
 import { Document, DocumentStatus, DocumentCategory } from "@/types/documents";
 
@@ -89,10 +92,7 @@ export default function DocumentsList({
   if (loading) {
     return (
       <div className={`space-y-6 ${className}`}>
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading documents...</p>
-        </div>
+        <LoadingState title="Loading documents..." icon={FileText} size="md" />
       </div>
     );
   }
@@ -100,18 +100,12 @@ export default function DocumentsList({
   if (error) {
     return (
       <div className={`space-y-6 ${className}`}>
-        <div className="text-center py-12">
-          <FileText className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Error Loading Documents
-          </h3>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          {onRetry && (
-            <Button variant="outline" onClick={onRetry}>
-              Retry
-            </Button>
-          )}
-        </div>
+        <ErrorState
+          title="Error Loading Documents"
+          error={error}
+          onRetry={onRetry}
+          icon={FileText}
+        />
       </div>
     );
   }
@@ -191,28 +185,32 @@ export default function DocumentsList({
             />
           ))
         ) : (
-          <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No documents found
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm ||
+          <EmptyState
+            title="No documents found"
+            description={
+              searchTerm ||
               selectedCategory !== "all" ||
               selectedStatus !== "all"
                 ? "Try adjusting your filters or search terms"
-                : "Start by adding documents from templates"}
-            </p>
-            {!searchTerm &&
+                : "Start by adding documents from templates"
+            }
+            icon={FileText}
+            actionLabel={
+              !searchTerm &&
               selectedCategory === "all" &&
               selectedStatus === "all" &&
-              onAddDocuments && (
-                <Button variant="outline" onClick={onAddDocuments}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Document
-                </Button>
-              )}
-          </div>
+              onAddDocuments
+                ? "Add Your First Document"
+                : undefined
+            }
+            onAction={
+              !searchTerm &&
+              selectedCategory === "all" &&
+              selectedStatus === "all"
+                ? onAddDocuments
+                : undefined
+            }
+          />
         )}
       </div>
     </div>

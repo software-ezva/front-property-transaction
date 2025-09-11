@@ -15,11 +15,15 @@ export async function middleware(request: NextRequest) {
     (route) => request.nextUrl.pathname === route
   );
   const protectedRoutes = ["/agent", "/client", "/signup"];
+  const viewerRoutes = ["/viewer"];
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
+  const isViewerRoute = viewerRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  );
 
-  if (isProtectedRoute) { 
+  if (isProtectedRoute) {
     try {
       const session = await auth0.getSession(request);
 
@@ -46,9 +50,31 @@ export async function middleware(request: NextRequest) {
       ) {
         return NextResponse.redirect(new URL("/agent/dashboard", request.url));
       }
-      
     } catch (error) {
       console.error("Error verificando sesión:", error);
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // Handle viewer routes - require authentication but allow any user type
+  if (isViewerRoute) {
+    try {
+      const session = await auth0.getSession(request);
+
+      if (!session?.user) {
+        console.log(
+          "Usuario no autenticado para viewer, redirigiendo al login"
+        );
+        const loginUrl = new URL("/auth/login", request.url);
+        loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      console.log("Usuario autenticado para viewer:", session.user.email);
+    } catch (error) {
+      console.error("Error verificando sesión para viewer:", error);
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);

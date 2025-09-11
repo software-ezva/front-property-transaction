@@ -20,11 +20,35 @@ export enum DocumentCategory {
 }
 
 export interface Document {
-  documentId: string
-  title: string
-  category: DocumentCategory
-  url: string
-  createdAt: Date
-  updatedAt: Date
-  status: DocumentStatus
+  documentId: string;
+  title: string;
+  category: DocumentCategory;
+  url: string;
+  createdAt: Date;
+  updatedAt: Date;
+  status: DocumentStatus;
+}
+
+export interface CreateDocumentRequest {
+  documentTemplateId: string;
+}
+
+export interface CreateDocumentResponse {
+  documentId: string;
+  title: string;
+  category: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  url: string;
+}
+
+export interface DocumentResponse {
+  documentId: string;
+  title: string;
+  category: string;
+  status: string;
+  url: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
