@@ -26,7 +26,6 @@ export async function PATCH(req: NextRequest) {
     );
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
-    console.error("Error updating transaction status:", error);
     return NextResponse.json(
       {
         error: error.message || "Failed to update transaction status",
@@ -53,7 +52,6 @@ export async function POST(req: NextRequest) {
   if (body.additionalNotes && body.additionalNotes.trim() !== "") {
     payload.additionalNotes = body.additionalNotes;
   }
-  console.log("Creating transaction with payload:", payload);
   try {
     const result = await ApiServerClient.post(
       ENDPOINTS.api.TRANSACTIONS,
@@ -61,7 +59,6 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating transaction:", error);
     return NextResponse.json(
       {
         error: error.message || "Failed to create transaction",
@@ -79,7 +76,6 @@ export async function GET() {
     const result = await ApiServerClient.get(ENDPOINTS.api.TRANSACTIONS);
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
-    console.error("Error fetching transactions:", error);
     return NextResponse.json(
       {
         error: error.message || "Failed to fetch transactions",

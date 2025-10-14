@@ -92,7 +92,7 @@ export default function HomePage() {
               <Link href={ENDPOINTS.auth0.SIGNUP}>
                 <Button variant="ghost">Sign Up</Button>
               </Link>
-              <Link href={ENDPOINTS.auth0.LOGIN}>
+              <Link href={`${ENDPOINTS.auth0.LOGIN}?returnTo=/logging-in`}>
                 <Button>Login</Button>
               </Link>
               <Link href={ENDPOINTS.auth0.LOGOUT}>

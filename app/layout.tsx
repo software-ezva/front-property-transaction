@@ -33,7 +33,6 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <ErrorNotificationProvider>
-          <AuthRedirect />
           {children}
           <Toaster />
         </ErrorNotificationProvider>

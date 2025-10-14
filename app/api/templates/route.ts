@@ -7,7 +7,6 @@ export async function GET(req: NextRequest) {
     const result = await ApiServerClient.get(ENDPOINTS.api.TEMPLATES);
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
-    console.error("Error fetching templates:", error);
     return NextResponse.json(
       {
         error: error.message || "Failed to fetch templates",
@@ -35,7 +34,6 @@ export async function POST(req: NextRequest) {
     const result = await ApiServerClient.post(ENDPOINTS.api.TEMPLATES, body);
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating template:", error);
     return NextResponse.json(
       {
         error: error.message || "Failed to create template",
@@ -60,8 +58,6 @@ export async function PATCH(req: NextRequest) {
     rest.checklistTemplates.forEach(
       (template: { id: string; items: any[] }) => {
         if (Array.isArray(template.items)) {
-          console.log(`Checklist Template ID: ${template.id}`);
-          console.log(`Items: ${JSON.stringify(template.items, null, 2)}`);
         }
       }
     );
@@ -72,7 +68,6 @@ export async function PATCH(req: NextRequest) {
     );
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
-    console.error("Error updating template:", error);
     return NextResponse.json(
       {
         error: error.message || "Failed to update template",

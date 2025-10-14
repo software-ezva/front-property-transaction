@@ -35,7 +35,6 @@ export default function ClientAssignmentCard({
       const data = await apiClient.get(ENDPOINTS.internal.CLIENT_PROFILE);
       setClients(data);
     } catch (error) {
-      console.error("Error loading clients:", error);
       toast({
         title: "Error",
         description: "Failed to load clients",

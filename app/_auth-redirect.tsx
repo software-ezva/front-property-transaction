@@ -12,14 +12,14 @@ export default function AuthRedirect() {
     if (isLoading) return;
     if (!user) return;
 
-    // Only run on root or after login
+    // Only redirect from root page if user doesn't have a profile
+    // Let Auth0 returnTo handle direct redirections to /logging-in
     if (pathname === "/") {
       if (!user.profile?.profileType) {
         router.replace("/signup/role-selection");
-      } else if (user.profile?.profileType === "real_estate_agent") {
-        router.replace("/agent/dashboard");
-      } else if (user.profile?.profileType === "client") {
-        router.replace("/client/dashboard");
+      } else {
+        // If user has profile but is on root, redirect to loading
+        router.replace("/logging-in");
       }
     }
   }, [user, isLoading, pathname, router]);

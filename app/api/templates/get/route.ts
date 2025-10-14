@@ -21,8 +21,6 @@ export async function GET(req: NextRequest) {
     result.checklistTemplates.forEach(
       (template: { id: string; items: any[] }) => {
         if (Array.isArray(template.items)) {
-          console.log(`Checklist Template ID: ${template.id}`);
-          console.log(`Items: ${JSON.stringify(template.items, null, 2)}`);
         }
       }
     );

@@ -70,7 +70,6 @@ export async function GET(req: NextRequest) {
     const result = await ApiServerClient.get(ENDPOINTS.api.CLIENT_PROFILE);
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
-    console.error("Error del backend:", error);
     return NextResponse.json(
       {
         error: error.message || "Error fetching client profile",
