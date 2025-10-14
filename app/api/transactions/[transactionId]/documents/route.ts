@@ -108,8 +108,6 @@ export async function POST(
 
     return NextResponse.json(transformedDocument, { status: 201 });
   } catch (error) {
-    console.error("Error creating document:", error);
-
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {
