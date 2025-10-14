@@ -108,8 +108,8 @@ export default function CreateDocumentTemplateClient() {
         file: selectedFile,
       });
 
-      // Redirigir a la lista de templates con el UUID del template recién creado
-      router.push(`/agent/document-templates?viewTemplate=${newTemplate.uuid}`);
+      // Redirigir a la lista de templates sin abrir automáticamente los detalles
+      router.push("/agent/document-templates");
     } catch (error) {
       console.error("Error creating template:", error);
       // El error se mostrará automáticamente por el sistema de notificaciones

@@ -9,13 +9,28 @@ export async function GET(
   try {
     const { uuid } = params;
 
+    if (!uuid) {
+      return NextResponse.json(
+        { error: "Document template UUID is required" },
+        { status: 400 }
+      );
+    }
+
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(uuid)) {
+      return NextResponse.json(
+        { error: "Invalid document template UUID format" },
+        { status: 400 }
+      );
+    }
+
     const response = await ApiServerClient.get(
       `${ENDPOINTS.api.DOCUMENT_TEMPLATES}/${uuid}`
     );
+
     return NextResponse.json(response);
   } catch (error: any) {
-    console.error("Error fetching document template:", error);
-
     if (error.status) {
       return NextResponse.json(
         {
@@ -46,8 +61,6 @@ export async function DELETE(
     await ApiServerClient.delete(`${ENDPOINTS.api.DOCUMENT_TEMPLATES}/${uuid}`);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Error deleting document template:", error);
-
     if (error.status) {
       return NextResponse.json(
         {

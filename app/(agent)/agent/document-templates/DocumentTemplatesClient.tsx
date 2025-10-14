@@ -23,11 +23,15 @@ import LoadingState from "@/components/molecules/LoadingState";
 import ErrorState from "@/components/molecules/ErrorState";
 import EmptyState from "@/components/molecules/EmptyState";
 import ConfirmationDialog from "@/components/molecules/ConfirmationDialog";
+import PDFViewer from "@/components/molecules/PDFViewer";
 import {
   DocumentCategory,
   type DocumentTemplate,
 } from "@/types/document-templates";
-import { useDocumentTemplates } from "@/hooks/use-document-templates";
+import {
+  useDocumentTemplates,
+  useDocumentTemplate,
+} from "@/hooks/use-document-templates";
 
 export default function DocumentTemplatesClient() {
   const searchParams = useSearchParams();
@@ -39,7 +43,17 @@ export default function DocumentTemplatesClient() {
   >("all");
   const [selectedTemplate, setSelectedTemplate] =
     useState<DocumentTemplate | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null
+  );
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  // Hook para cargar el template individual con URL
+  const {
+    template: templateWithUrl,
+    loading: templateLoading,
+    error: templateError,
+  } = useDocumentTemplate(selectedTemplateId);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] =
@@ -71,7 +85,8 @@ export default function DocumentTemplatesClient() {
   });
 
   const handleView = (template: DocumentTemplate) => {
-    setSelectedTemplate(template);
+    setSelectedTemplate(template); // Template básico sin URL
+    setSelectedTemplateId(template.uuid); // Esto activará el hook para cargar con URL
     setIsViewerOpen(true);
   };
 
@@ -104,6 +119,7 @@ export default function DocumentTemplatesClient() {
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
     setSelectedTemplate(null);
+    setSelectedTemplateId(null); // Limpiar para detener el hook
   };
 
   const getCategoryVariant = (category: DocumentCategory) => {
@@ -421,13 +437,22 @@ export default function DocumentTemplatesClient() {
               </div>
 
               {/* Document Preview */}
-              <div className="flex-1 p-4 lg:p-6 relative bg-muted/5">
+              <div className="flex-1 p-4 lg:p-6 pr-12 lg:pr-16 relative bg-muted/5">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                  className="absolute top-4 left-4 z-10 bg-background border border-border shadow-md hover:shadow-lg transition-shadow"
-                  title={isSidebarCollapsed ? "Show details" : "Hide details"}
+                  className="absolute top-4 left-4 z-10 bg-background border border-border shadow-md hover:shadow-lg transition-all duration-200"
+                  title={
+                    isSidebarCollapsed
+                      ? "Show document details"
+                      : "Hide document details"
+                  }
+                  aria-label={
+                    isSidebarCollapsed
+                      ? "Show document details"
+                      : "Hide document details"
+                  }
                 >
                   {isSidebarCollapsed ? (
                     <ChevronRight className="w-4 h-4" />
@@ -436,34 +461,52 @@ export default function DocumentTemplatesClient() {
                   )}
                 </Button>
 
-                <div className="h-full bg-background rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors flex items-center justify-center">
-                  <div className="text-center max-w-md mx-auto p-8">
-                    <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <FileText className="w-12 h-12 text-primary" />
+                {/* PDF Viewer */}
+                <div className="h-full w-full ml-12">
+                  {templateLoading ? (
+                    <div className="h-full flex items-center justify-center">
+                      <LoadingState
+                        title="Loading document..."
+                        description="Please wait while we load the document details"
+                        icon={FileText}
+                      />
                     </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-3">
-                      Document Preview
-                    </h3>
-                    <p className="text-muted-foreground mb-6 leading-relaxed">
-                      Click the button below to open this document in a new tab
-                      for full viewing and interaction.
-                    </p>
-                    <div className="space-y-4">
-                      <Button
-                        onClick={() =>
-                          window.open(selectedTemplate.url, "_blank")
-                        }
-                        className="w-full lg:w-auto px-8 py-3 text-base font-medium"
-                      >
-                        <Eye className="w-5 h-5 mr-2" />
-                        Open Document
-                      </Button>
-                      <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-md">
-                        <p className="font-medium mb-1">File Location:</p>
-                        <p className="break-all">{selectedTemplate.url}</p>
+                  ) : templateError ? (
+                    <div className="h-full flex items-center justify-center">
+                      <ErrorState
+                        title="Error Loading Document"
+                        error={templateError}
+                        onRetry={() => window.location.reload()}
+                        icon={FileText}
+                      />
+                    </div>
+                  ) : templateWithUrl?.url ? (
+                    <PDFViewer
+                      documentUrl={templateWithUrl.url}
+                      documentTitle={templateWithUrl.title}
+                      allowDownload={true}
+                      allowFullscreen={true}
+                      className="h-full"
+                      onError={(error) => {
+                        // Error handled by PDFViewer component internally
+                      }}
+                      onLoad={() => {
+                        // PDF loaded successfully
+                      }}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
+                          No Document Available
+                        </h3>
+                        <p className="text-muted-foreground">
+                          This template doesn't have a valid document URL.
+                        </p>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>

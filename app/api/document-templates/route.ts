@@ -6,7 +6,6 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
 
-    // Validar campos requeridos
     const title = formData.get("title") as string;
     const category = formData.get("category") as string;
     const file = formData.get("file") as File;
@@ -21,7 +20,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar tipo de archivo
     const allowedTypes = [
       "application/pdf",
       "application/msword",
@@ -38,8 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar tamaño de archivo (10MB máximo)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
         {
@@ -50,13 +47,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Preparar FormData para el backend
     const backendFormData = new FormData();
     backendFormData.append("title", title);
     backendFormData.append("category", category);
     backendFormData.append("file", file);
 
-    // Llamar al backend API
     const response = await ApiServerClient.post(
       ENDPOINTS.api.DOCUMENT_TEMPLATES,
       backendFormData
@@ -64,8 +59,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating document template:", error);
-
     if (error.status) {
       return NextResponse.json(
         {
@@ -97,10 +90,9 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await ApiServerClient.get(endpoint);
+
     return NextResponse.json(response);
   } catch (error: any) {
-    console.error("Error fetching document templates:", error);
-
     if (error.status) {
       return NextResponse.json(
         {

@@ -1,8 +1,8 @@
 export enum DocumentStatus {
   PENDING = "Pending",
-  WAITING = "Waiting",
+  IN_EDITION = "In Edition",
+  AWAITING_SIGNATURES = "Awaiting Signatures",
   SIGNED = "Signed",
-  READY = "Ready",
   REJECTED = "Rejected",
   ARCHIVED = "Archived",
 }
@@ -27,6 +27,9 @@ export interface Document {
   createdAt: Date;
   updatedAt: Date;
   status: DocumentStatus;
+  isEditable?: boolean;
+  isSignable?: boolean;
+  couldBeRequestedForSignature?: boolean;
 }
 
 export interface CreateDocumentRequest {
@@ -51,4 +54,7 @@ export interface DocumentResponse {
   url: string;
   createdAt: Date;
   updatedAt: Date;
+  isEditable?: boolean;
+  isSignable?: boolean;
+  couldBeRequestedForSignature?: boolean;
 }
