@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
@@ -10,27 +10,16 @@ import {
   AlertCircle,
   Save,
   Edit3,
-  Check,
 } from "lucide-react";
 import Button from "@/components/atoms/Button";
 import CustomBadge from "@/components/atoms/Badge";
 import PageTitle from "@/components/molecules/PageTitle";
 import DocumentSaveDialog from "@/components/molecules/DocumentSaveDialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  DocumentStatus,
-  DocumentCategory,
-  type Document,
-} from "@/types/documents";
-import { useDocumentViewer } from "@/hooks/use-document-viewer";
+import PDFEditor from "@/components/molecules/PDFEditor";
+import { DocumentStatus, type Document } from "@/types/documents";
+
+import { updateDocumentFile } from "@/lib/api/transaction-documents";
+import { useToast } from "@/hooks/use-toast";
 
 const getBadgeVariant = (
   status: DocumentStatus
@@ -38,11 +27,11 @@ const getBadgeVariant = (
   switch (status) {
     case DocumentStatus.PENDING:
       return "warning";
-    case DocumentStatus.WAITING:
+    case DocumentStatus.IN_EDITION:
+      return "warning";
+    case DocumentStatus.AWAITING_SIGNATURES:
       return "warning";
     case DocumentStatus.SIGNED:
-      return "success";
-    case DocumentStatus.READY:
       return "success";
     case DocumentStatus.REJECTED:
       return "error";
@@ -63,40 +52,120 @@ export default function DocumentEditorClient({
   documentId,
 }: DocumentEditorClientProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [isDetailsSidebarCollapsed, setIsDetailsSidebarCollapsed] =
     useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState("");
+  const [isEditing, setIsEditing] = useState(true);
   const [editedTitle, setEditedTitle] = useState("");
-  const [newStatus, setNewStatus] = useState<DocumentStatus | null>(null);
-  const [isReadyForReview, setIsReadyForReview] = useState(false);
+
   const [isReadyToSign, setIsReadyToSign] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Use the custom hook to fetch document data
-  const { document, loading, error, refetch } = useDocumentViewer(
-    transactionId,
-    documentId
-  );
+  // Estado local para el documento
+  const [document, setDocument] = useState<Document | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Función para limpiar sessionStorage
+  const clearDocumentCache = useCallback(() => {
+    const sessionKey = `document_${transactionId}_${documentId}`;
+    sessionStorage.removeItem(sessionKey);
+  }, [transactionId, documentId]);
+
+  // Función para obtener documento desde sessionStorage o API
+  const loadDocument = useCallback(async () => {
+    // Si ya tenemos el documento, no cargar de nuevo
+    if (document) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Primero intentar obtener desde sessionStorage
+      const sessionKey = `document_${transactionId}_${documentId}`;
+      const cachedData = sessionStorage.getItem(sessionKey);
+
+      if (cachedData) {
+        const parsedDocument = JSON.parse(cachedData);
+        // Convertir fechas desde strings
+        parsedDocument.createdAt = new Date(parsedDocument.createdAt);
+        parsedDocument.updatedAt = new Date(parsedDocument.updatedAt);
+        setDocument(parsedDocument);
+        setLoading(false);
+
+        return;
+      }
+
+      // No hay datos en cache - mostrar error en lugar de llamar API
+      throw new Error(
+        "Document data not found. Please navigate to the editor from the document viewer."
+      );
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load document";
+      setError(errorMessage);
+      toast({
+        title: "Error loading document",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [transactionId, documentId, toast, document]);
+
+  // Función refetch para compatibilidad
+  const refetch = useCallback(() => {
+    // Intentar recargar (principalmente para sessionStorage)
+    loadDocument();
+  }, [loadDocument]);
 
   // Initialize editing state when document loads
-  const handleStartEditing = useCallback(() => {
-    if (document) {
+  const initializeEditing = useCallback(() => {
+    if (document && isEditing) {
       setEditedTitle(document.title);
-      setEditedContent(""); // Initialize with empty content for notes
-      setNewStatus(document.status);
-      setIsEditing(true);
     }
-  }, [document]);
+  }, [document, isEditing]);
+
+  // Cargar documento al montar el componente
+  useEffect(() => {
+    if (transactionId && documentId) {
+      loadDocument();
+    }
+  }, [transactionId, documentId, loadDocument]);
+
+  // Auto-initialize when document loads
+  useEffect(() => {
+    initializeEditing();
+  }, [initializeEditing]);
+
+  // Limpiar sessionStorage cuando se cierra la pestaña
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      clearDocumentCache();
+    };
+
+    // Agregar listener para cuando se cierra la pestaña
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup: solo remover el listener, NO limpiar el cache automáticamente
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [clearDocumentCache]);
 
   const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditedTitle("");
-    setEditedContent("");
-    setNewStatus(null);
-    setIsReadyForReview(false);
-    setIsReadyToSign(false);
+    if (window.confirm("Discard unsaved changes?")) {
+      // Limpiar cache al cancelar
+      clearDocumentCache();
+
+      router.push(
+        `/viewer/transactions/${transactionId}/documents/${documentId}`
+      );
+    }
   };
 
   const handleSaveChanges = () => {
@@ -106,54 +175,72 @@ export default function DocumentEditorClient({
   const handleConfirmSave = async (readyToSign: boolean) => {
     setIsSaving(true);
     try {
-      // Here you would make the API call to save the document
-      // For now, we'll simulate the API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await updateDocumentFile(
+        transactionId,
+        documentId,
+        editedTitle,
+        readyToSign
+      );
 
-      console.log("Saving document with:", {
-        title: editedTitle,
-        content: editedContent,
-        status: newStatus,
-        isReadyForReview,
-        isReadyToSign: readyToSign,
-      });
-
-      // Close edit mode and dialog
-      setIsEditing(false);
       setShowConfirmDialog(false);
-      setIsReadyForReview(false);
       setIsReadyToSign(false);
 
-      // Refetch document data
-      refetch();
+      toast({
+        title: "Document updated successfully",
+        description: readyToSign
+          ? "Document marked as ready to sign"
+          : "Document status updated",
+        variant: "default",
+      });
 
-      // Show success message (you can add a toast here)
-      console.log(
-        "Document saved successfully!",
-        readyToSign ? "Ready to sign!" : ""
+      // Limpiar cache al guardar cambios
+      clearDocumentCache();
+
+      router.push(
+        `/viewer/transactions/${transactionId}/documents/${documentId}`
       );
     } catch (error) {
-      console.error("Error saving document:", error);
+      toast({
+        title: "Error updating document",
+        description:
+          error instanceof Error ? error.message : "Failed to update document",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleStatusChange = (status: string) => {
-    setNewStatus(status as DocumentStatus);
-  };
-
   const handleClose = () => {
-    if (isEditing) {
-      // Show warning about unsaved changes
-      const confirmLeave = window.confirm(
-        "You have unsaved changes. Are you sure you want to leave?"
-      );
-      if (!confirmLeave) return;
+    const hasUnsavedChanges = editedTitle !== document?.title;
+    if (hasUnsavedChanges && !window.confirm("Discard unsaved changes?")) {
+      return;
     }
 
-    // Navigate back to transaction view
-    router.push(`/agent/transactions/${transactionId}`);
+    // Limpiar cache al cerrar
+    clearDocumentCache();
+
+    router.push(
+      `/viewer/transactions/${transactionId}/documents/${documentId}`
+    );
+  };
+
+  // Manejar guardado del PDF Editor
+  const handlePDFEditorSave = (success: boolean) => {
+    if (success) {
+      toast({
+        title: "Document saved",
+        description: "Document has been saved with annotations",
+        variant: "default",
+      });
+
+      // Limpiar cache al guardar PDF
+      clearDocumentCache();
+
+      router.push(
+        `/viewer/transactions/${transactionId}/documents/${documentId}`
+      );
+    }
   };
 
   // Loading state
@@ -175,17 +262,25 @@ export default function DocumentEditorClient({
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            Document Not Found
+            Document Editor Access Error
           </h3>
           <p className="text-muted-foreground mb-4">
-            {error || "Unable to load the requested document."}
+            {error ||
+              "Please navigate to the document editor from the document viewer to ensure proper data loading."}
           </p>
           <div className="space-x-2">
+            <Button
+              variant="primary"
+              onClick={() =>
+                router.push(
+                  `/viewer/transactions/${transactionId}/documents/${documentId}`
+                )
+              }
+            >
+              Go to Document Viewer
+            </Button>
             <Button variant="outline" onClick={refetch}>
               Try Again
-            </Button>
-            <Button variant="primary" onClick={handleClose}>
-              Go Back
             </Button>
           </div>
         </div>
@@ -208,44 +303,25 @@ export default function DocumentEditorClient({
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              {isEditing ? (
-                <>
-                  <CustomBadge variant="warning">Editing</CustomBadge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCancelEdit}
-                    disabled={isSaving}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleSaveChanges}
-                    disabled={isSaving}
-                    className="flex items-center gap-2"
-                  >
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <CustomBadge variant={getBadgeVariant(document.status)}>
-                    {document.status}
-                  </CustomBadge>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleStartEditing}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    Edit Document
-                  </Button>
-                </>
-              )}
+              <CustomBadge variant="warning">Editing</CustomBadge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSaveChanges}
+                disabled={isSaving}
+                className="flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                Save Changes
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -295,43 +371,6 @@ export default function DocumentEditorClient({
 
                     <div>
                       <span className="text-xs text-muted-foreground">
-                        Status
-                      </span>
-                      {isEditing ? (
-                        <div className="mt-1">
-                          <Select
-                            defaultValue={document.status}
-                            onValueChange={handleStatusChange}
-                          >
-                            <SelectTrigger className="w-full h-8 text-xs">
-                              <SelectValue placeholder="Select status..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.values(DocumentStatus).map((status) => (
-                                <SelectItem
-                                  key={status}
-                                  value={status}
-                                  className="text-xs"
-                                >
-                                  {status}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ) : (
-                        <div className="mt-1">
-                          <CustomBadge
-                            variant={getBadgeVariant(document.status)}
-                          >
-                            {document.status}
-                          </CustomBadge>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <span className="text-xs text-muted-foreground">
                         Category
                       </span>
                       <p className="text-sm text-foreground mt-1">
@@ -358,56 +397,11 @@ export default function DocumentEditorClient({
                     </div>
                   </div>
                 </div>
-
-                {/* Content Editor */}
-                {isEditing && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-3">
-                      Content Notes
-                    </h4>
-                    <Textarea
-                      value={editedContent}
-                      onChange={(e) => setEditedContent(e.target.value)}
-                      placeholder="Add notes or content for this document..."
-                      className="min-h-[120px] text-sm"
-                    />
-                  </div>
-                )}
-
-                {/* Ready for Review Checkbox */}
-                {isEditing && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-3">
-                      Review Status
-                    </h4>
-                    <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="ready-for-review"
-                        checked={isReadyForReview}
-                        onCheckedChange={(checked) =>
-                          setIsReadyForReview(!!checked)
-                        }
-                      />
-                      <label
-                        htmlFor="ready-for-review"
-                        className="text-sm text-foreground leading-tight cursor-pointer"
-                      >
-                        Mark this document as ready for review
-                      </label>
-                    </div>
-                    {isReadyForReview && (
-                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                        <Check className="w-3 h-3 inline mr-1" />
-                        This document will be marked as ready for client review.
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
-          {/* Document Editor/Preview Area */}
+          {/* Document Editor Area */}
           <div className="flex-1 relative bg-gradient-to-br from-muted/10 to-muted/30">
             {/* Toggle Button */}
             <Button
@@ -416,57 +410,53 @@ export default function DocumentEditorClient({
               onClick={() =>
                 setIsDetailsSidebarCollapsed(!isDetailsSidebarCollapsed)
               }
-              className="absolute top-4 left-4 z-10 bg-background/90 backdrop-blur-sm shadow-sm"
+              className="absolute top-16 left-2 z-10 bg-white shadow-sm h-8 w-8 p-0"
               title={
                 isDetailsSidebarCollapsed ? "Show details" : "Hide details"
               }
             >
               {isDetailsSidebarCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3 h-3" />
               ) : (
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3 h-3" />
               )}
             </Button>
 
-            {/* Document Preview */}
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center max-w-2xl">
-                <div className="bg-background/80 backdrop-blur-sm rounded-lg p-8 shadow-lg border border-border">
-                  <FileText className="w-20 h-20 text-primary mx-auto mb-6" />
-                  <h3 className="text-xl font-semibold text-foreground mb-3">
-                    {isEditing ? "Document Editor" : "Document Preview"}
-                  </h3>
-                  <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
-                    {isEditing ? editedTitle : document.title}
-                  </p>
-                  <div className="text-xs text-muted-foreground space-y-1 mb-6">
-                    <p>Category: {document.category}</p>
-                    <p>
-                      Status:{" "}
-                      {isEditing && newStatus ? newStatus : document.status}
-                    </p>
-                    {isEditing && isReadyForReview && (
-                      <p className="text-green-600 font-medium">
-                        Ready for Review
+            {/* PDF Editor */}
+            <div className="h-full flex flex-col p-4">
+              {document.url ? (
+                <PDFEditor
+                  documentUrl={document.url}
+                  documentTitle={editedTitle || document.title}
+                  onSave={handlePDFEditorSave}
+                  onCancel={() =>
+                    router.push(
+                      `/viewer/transactions/${transactionId}/documents/${documentId}`
+                    )
+                  }
+                  className="flex-1"
+                />
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center max-w-2xl">
+                    <div className="bg-background/80 backdrop-blur-sm rounded-lg p-8 shadow-lg border border-border">
+                      <FileText className="w-20 h-20 text-primary mx-auto mb-6" />
+                      <h3 className="text-xl font-semibold text-foreground mb-3">
+                        Document Editor
+                      </h3>
+                      <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
+                        {editedTitle}
                       </p>
-                    )}
-                  </div>
-
-                  {isEditing ? (
-                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-                      <Edit3 className="w-4 h-4 inline mr-2" />
-                      Document editing interface would be integrated here
-                      <div className="mt-2 text-xs">
-                        PDF Editor, Word Editor, or Rich Text Editor components
+                      <div className="text-xs text-muted-foreground space-y-1 mb-6">
+                        <p>Category: {document.category}</p>
+                      </div>
+                      <div className="mt-6 p-3 bg-muted/50 rounded border text-xs text-muted-foreground">
+                        Document URL not available for editing
                       </div>
                     </div>
-                  ) : (
-                    <div className="mt-6 p-3 bg-muted/50 rounded border text-xs text-muted-foreground">
-                      PDF/Word viewer integration would be implemented here
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -479,7 +469,7 @@ export default function DocumentEditorClient({
         onConfirm={handleConfirmSave}
         title="Save Document Changes"
         documentTitle={editedTitle}
-        isReadyForReview={isReadyForReview}
+        isReadyForReview={false}
         isLoading={isSaving}
       />
     </>

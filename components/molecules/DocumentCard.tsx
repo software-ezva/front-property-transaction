@@ -14,9 +14,9 @@ const getStatusVariant = (status: DocumentStatus) => {
   switch (status) {
     case DocumentStatus.SIGNED:
       return "success" as const;
-    case DocumentStatus.READY:
-      return "success" as const;
-    case DocumentStatus.WAITING:
+    case DocumentStatus.AWAITING_SIGNATURES:
+      return "warning" as const;
+    case DocumentStatus.IN_EDITION:
       return "warning" as const;
     case DocumentStatus.PENDING:
       return "warning" as const;
@@ -84,7 +84,7 @@ export default function DocumentCard({
               <Eye className="w-4 h-4" />
             </Button>
           )}
-          {onArchive && (
+          {onArchive && document.status !== DocumentStatus.SIGNED && (
             <Button
               variant="ghost"
               size="sm"

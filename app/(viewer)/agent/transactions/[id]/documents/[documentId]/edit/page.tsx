@@ -1,19 +1,16 @@
 import DocumentEditorClient from "./DocumentEditorClient";
 
 interface DocumentEditorPageProps {
-  params: {
+  params: Promise<{
     id: string;
     documentId: string;
-  };
+  }>;
 }
 
-export default function DocumentEditorPage({
+export default async function DocumentEditorPage({
   params,
 }: DocumentEditorPageProps) {
-  return (
-    <DocumentEditorClient
-      transactionId={params.id}
-      documentId={params.documentId}
-    />
-  );
+  const { id, documentId } = await params;
+
+  return <DocumentEditorClient transactionId={id} documentId={documentId} />;
 }

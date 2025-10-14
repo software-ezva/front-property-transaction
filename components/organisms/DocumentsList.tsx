@@ -63,10 +63,10 @@ export default function DocumentsList({
     const pending = documents.filter(
       (doc) => doc.status === DocumentStatus.PENDING
     ).length;
-    const ready = documents.filter(
-      (doc) => doc.status === DocumentStatus.READY
+    const awaitingSignatures = documents.filter(
+      (doc) => doc.status === DocumentStatus.AWAITING_SIGNATURES
     ).length;
-    return { total, signed, pending, ready };
+    return { total, signed, pending, awaitingSignatures };
   };
 
   const stats = getDocumentStats();
@@ -80,8 +80,8 @@ export default function DocumentsList({
       label: "Signed",
     },
     {
-      value: stats.ready,
-      label: "Ready",
+      value: stats.awaitingSignatures,
+      label: "Awaiting Signatures",
     },
     {
       value: stats.pending,

@@ -20,6 +20,9 @@ const mockDocuments: Document[] = [
     createdAt: new Date("2024-01-15T10:00:00Z"),
     updatedAt: new Date("2024-01-20T14:30:00Z"),
     status: DocumentStatus.SIGNED,
+    isEditable: false,
+    isSignable: false,
+    couldBeRequestedForSignature: false,
   },
   {
     documentId: "doc_002",
@@ -28,7 +31,10 @@ const mockDocuments: Document[] = [
     url: "/documents/property-disclosure.pdf",
     createdAt: new Date("2024-01-16T09:00:00Z"),
     updatedAt: new Date("2024-01-18T11:00:00Z"),
-    status: DocumentStatus.READY,
+    status: DocumentStatus.AWAITING_SIGNATURES,
+    isEditable: false,
+    isSignable: true,
+    couldBeRequestedForSignature: false,
   },
   {
     documentId: "doc_003",
@@ -38,6 +44,9 @@ const mockDocuments: Document[] = [
     createdAt: new Date("2024-01-20T15:00:00Z"),
     updatedAt: new Date("2024-01-22T10:00:00Z"),
     status: DocumentStatus.PENDING,
+    isEditable: true,
+    isSignable: false,
+    couldBeRequestedForSignature: true,
   },
   {
     documentId: "doc_004",
@@ -46,7 +55,10 @@ const mockDocuments: Document[] = [
     url: "/documents/title-insurance.pdf",
     createdAt: new Date("2024-01-18T12:00:00Z"),
     updatedAt: new Date("2024-01-19T16:00:00Z"),
-    status: DocumentStatus.WAITING,
+    status: DocumentStatus.IN_EDITION,
+    isEditable: true,
+    isSignable: false,
+    couldBeRequestedForSignature: false,
   },
   {
     documentId: "doc_005",
@@ -56,6 +68,9 @@ const mockDocuments: Document[] = [
     createdAt: new Date("2024-01-22T08:00:00Z"),
     updatedAt: new Date("2024-01-22T08:00:00Z"),
     status: DocumentStatus.PENDING,
+    isEditable: true,
+    isSignable: false,
+    couldBeRequestedForSignature: true,
   },
 ];
 

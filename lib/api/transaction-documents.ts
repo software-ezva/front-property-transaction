@@ -16,6 +16,10 @@ export interface TransactionDocumentResponse {
   status: string;
   createdAt: string;
   updatedAt: string;
+  url?: string;
+  isEditable?: boolean;
+  isSignable?: boolean;
+  couldBeRequestedForSignature?: boolean;
 }
 
 /**
@@ -112,6 +116,80 @@ export class TransactionDocumentApiClient {
         response.updatedAt instanceof Date
           ? response.updatedAt
           : new Date(response.updatedAt),
+      isEditable: response.isEditable,
+      isSignable: response.isSignable,
+      couldBeRequestedForSignature: response.couldBeRequestedForSignature,
+    };
+  }
+
+  /**
+   * Check document status and readiness for edit
+   */
+  static async checkDocumentForEdit(
+    transactionId: string,
+    documentId: string
+  ): Promise<Partial<Document>> {
+    const response = await apiClient.patch<DocumentResponse>(
+      `${ENDPOINTS.internal.TRANSACTIONS}/${transactionId}/documents/${documentId}`,
+      {},
+      {
+        errorTitle: "Error checking document for edit",
+      }
+    );
+
+    // Transform backend response to our internal type
+    // Note: URL is not returned by check-for-edit endpoint
+    return {
+      documentId: response.documentId,
+      title: response.title,
+      category: response.category as DocumentCategory,
+      status: response.status as DocumentStatus,
+      createdAt:
+        response.createdAt instanceof Date
+          ? response.createdAt
+          : new Date(response.createdAt),
+      updatedAt:
+        response.updatedAt instanceof Date
+          ? response.updatedAt
+          : new Date(response.updatedAt),
+      isEditable: response.isEditable ?? false,
+      isSignable: response.isSignable ?? false,
+      couldBeRequestedForSignature:
+        response.couldBeRequestedForSignature ?? false,
+    };
+  }
+
+  /**
+   * Update document status (mark as ready for signing)
+   */
+  static async updateDocumentFile(
+    transactionId: string,
+    documentId: string,
+    _title: string, // Not used - endpoint doesn't support title updates
+    isReadyForSigning: boolean = false
+  ): Promise<Document> {
+    const response = await apiClient.patch<DocumentResponse>(
+      `${ENDPOINTS.internal.TRANSACTIONS}/${transactionId}/documents/${documentId}/edit`,
+      { isReadyForSigning },
+      { errorTitle: "Error updating document" }
+    );
+
+    return {
+      ...response,
+      category: response.category as DocumentCategory,
+      status: response.status as DocumentStatus,
+      createdAt:
+        response.createdAt instanceof Date
+          ? response.createdAt
+          : new Date(response.createdAt),
+      updatedAt:
+        response.updatedAt instanceof Date
+          ? response.updatedAt
+          : new Date(response.updatedAt),
+      isEditable: response.isEditable ?? false,
+      isSignable: response.isSignable ?? false,
+      couldBeRequestedForSignature:
+        response.couldBeRequestedForSignature ?? false,
     };
   }
 }
@@ -121,4 +199,6 @@ export const {
   getTransactionDocuments,
   createDocumentFromTemplate,
   getTransactionDocument,
+  checkDocumentForEdit,
+  updateDocumentFile,
 } = TransactionDocumentApiClient;
