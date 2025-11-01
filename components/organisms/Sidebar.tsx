@@ -10,6 +10,7 @@ import {
   Settings,
 } from "lucide-react";
 import NavigationItem from "../molecules/NavigationItem";
+import { hr } from "date-fns/locale";
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -40,9 +41,33 @@ const Sidebar = ({ isCollapsed, profile }: SidebarProps) => {
     { href: "/client/agents", icon: Users, label: "My Agents" },
   ];
 
+  const brokerNavigation = [
+    { href: "/broker/dashboard", icon: Home, label: "Dashboard" },
+    { href: "/broker/my-brokerage", icon: Building2, label: "My Brokerage" },
+  ];
+  const supportingProfessionalNavigation = [
+    {
+      href: "/supporting-professional/dashboard",
+      icon: Home,
+      label: "Dashboard",
+    },
+    {
+      href: "/supporting-professional/brokerages",
+      icon: Building2,
+      label: "Brokerages",
+    },
+    {
+      href: "/supporting-professional/transactions",
+      icon: BriefcaseBusiness,
+      label: "Transactions",
+    },
+  ];
+
   const navigationConfig: Record<string, typeof agentNavigation> = {
     "real estate agent": agentNavigation,
     client: clientNavigation,
+    broker: brokerNavigation,
+    "supporting professional": supportingProfessionalNavigation,
   };
 
   const navigation = navigationConfig[profile] || clientNavigation;

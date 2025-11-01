@@ -38,7 +38,7 @@ interface TransactionCardProps {
     createdAt: string;
     updatedAt?: string;
   };
-  userRole: "agent" | "client";
+  userRole: "agent" | "client" | "broker" | "supporting_professional";
   onViewDetails?: (id: string) => void;
 }
 
