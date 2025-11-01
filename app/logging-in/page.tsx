@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@auth0/nextjs-auth0";
 import { ENTERPRISE } from "@/utils/enterprise";
 import { Building, Home, Key, CheckCircle } from "lucide-react";
+import { getDashboardRoute, getStatusMessage } from "@/lib/profile-utils";
 
 const LoadingPage: React.FC = () => {
   const { user, isLoading } = useUser();
@@ -27,14 +28,9 @@ const LoadingPage: React.FC = () => {
       if (loadingStep < loadingSteps.length - 1) {
         setLoadingStep((prev) => prev + 1);
       } else {
-        // After final step, redirect based on user profile
-        if (user?.profile?.profileType === "real_estate_agent") {
-          router.replace("/agent/dashboard");
-        } else if (user?.profile?.profileType === "client") {
-          router.replace("/client/dashboard");
-        } else {
-          router.replace("/signup/role-selection");
-        }
+        // After final step, redirect based on user profile using centralized utility
+        const redirectRoute = getDashboardRoute(user?.profile?.profileType);
+        router.replace(redirectRoute);
       }
     }, loadingSteps[loadingStep]?.delay || 1000);
 
@@ -113,11 +109,7 @@ const LoadingPage: React.FC = () => {
         {/* Status Message */}
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            {user?.profile?.profileType === "real_estate_agent"
-              ? "Preparing your agent dashboard..."
-              : user?.profile?.profileType === "client"
-              ? "Setting up your client area..."
-              : "Almost there..."}
+            {getStatusMessage(user?.profile?.profileType)}
           </p>
         </div>
       </div>

@@ -3,15 +3,29 @@
 import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, User, ArrowRight, ArrowLeft } from "lucide-react";
+import {
+  Building2,
+  User,
+  ArrowRight,
+  ArrowLeft,
+  Briefcase,
+  UserCheck,
+} from "lucide-react";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import Link from "next/link";
 import { useUser } from "@auth0/nextjs-auth0";
 import { ENDPOINTS } from "@/lib/constants";
 import { apiClient } from "@/lib/api-internal";
+import { ProfessionalType } from "@/types/professionals";
+import { getDashboardRoute, PROFILE_TYPES } from "@/lib/profile-utils";
 
-type UserRole = "client" | "realestateagent" | null;
+type UserRole =
+  | "client"
+  | "realestateagent"
+  | "broker"
+  | "supporting_professional"
+  | null;
 
 interface FormData {
   role: UserRole;
@@ -20,6 +34,8 @@ interface FormData {
   phone_number: string;
   license_number?: string;
   date_of_birth?: string;
+  professional_type?: ProfessionalType;
+  mls_number?: string;
 }
 
 export default function RoleSelectionClient() {
@@ -33,6 +49,8 @@ export default function RoleSelectionClient() {
     phone_number: "",
     license_number: "",
     date_of_birth: "",
+    professional_type: undefined,
+    mls_number: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,6 +94,19 @@ export default function RoleSelectionClient() {
       }
     }
 
+    if (formData.role === "broker") {
+      if (!formData.license_number?.trim()) {
+        newErrors.license_number = "License number is required";
+      }
+      // mls_number and brokerage_id are optional
+    }
+
+    if (formData.role === "supporting_professional") {
+      if (!formData.professional_type) {
+        newErrors.professional_type = "Professional type is required";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -108,6 +139,23 @@ export default function RoleSelectionClient() {
           phone_number: formData.phone_number,
           date_of_birth: formData.date_of_birth,
         };
+      } else if (formData.role === "broker") {
+        endpoint = ENDPOINTS.internal.BROKER_PROFILE;
+        payload = {
+          esign_name: formData.esign_name,
+          esign_initials: formData.esign_initials,
+          phone_number: formData.phone_number,
+          license_number: formData.license_number,
+          mls_number: formData.mls_number,
+        };
+      } else if (formData.role === "supporting_professional") {
+        endpoint = ENDPOINTS.internal.SUPPORTING_PROFESSIONALS;
+        payload = {
+          esign_name: formData.esign_name,
+          esign_initials: formData.esign_initials,
+          phone_number: formData.phone_number,
+          professional_of: formData.professional_type,
+        };
       } else {
         throw new Error("Invalid role");
       }
@@ -115,14 +163,13 @@ export default function RoleSelectionClient() {
       // Always use the internal ApiClientSide route for both roles
       const res = await apiClient.post(endpoint, payload);
 
-      // Redirect to dashboard according to role
-      if (formData.role === "realestateagent") {
-        router.push("/agent/dashboard");
-      } else if (formData.role === "client") {
-        router.push("/client/dashboard");
-      } else {
-        router.push("/");
-      }
+      // Redirect to dashboard according to role using centralized utility
+      const profileType =
+        formData.role === "realestateagent"
+          ? PROFILE_TYPES.REAL_ESTATE_AGENT
+          : formData.role;
+      const dashboardRoute = getDashboardRoute(profileType);
+      router.push(dashboardRoute);
     } catch (error) {
       // Error se muestra automáticamente como toast
       console.error("Submission error:", error);
@@ -202,6 +249,46 @@ export default function RoleSelectionClient() {
               </div>
             </button>
 
+            <button
+              onClick={() => handleRoleSelect("broker")}
+              className="w-full p-6 bg-card border border-border rounded-lg hover:border-accent hover:bg-accent/5 transition-all group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                  <Briefcase className="w-6 h-6 text-accent" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Broker
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage real estate brokerage operations
+                  </p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleRoleSelect("supporting_professional")}
+              className="w-full p-6 bg-card border border-border rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all group"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                  <UserCheck className="w-6 h-6 text-orange-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Supporting Professional
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Provide specialized services for real estate transactions
+                  </p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-orange-500 transition-colors" />
+              </div>
+            </button>
+
             <div className="text-center pt-4">
               <Link
                 href="/"
@@ -219,12 +306,20 @@ export default function RoleSelectionClient() {
               <div className="flex items-center space-x-3 mb-2">
                 {formData.role === "realestateagent" ? (
                   <Building2 className="w-5 h-5 text-primary" />
+                ) : formData.role === "broker" ? (
+                  <Briefcase className="w-5 h-5 text-accent" />
+                ) : formData.role === "supporting_professional" ? (
+                  <UserCheck className="w-5 h-5 text-orange-500" />
                 ) : (
                   <User className="w-5 h-5 text-secondary" />
                 )}
                 <span className="font-medium text-foreground capitalize">
                   {formData.role === "realestateagent"
                     ? "Real Estate Agent"
+                    : formData.role === "broker"
+                    ? "Broker"
+                    : formData.role === "supporting_professional"
+                    ? "Supporting Professional"
                     : "Client"}
                 </span>
               </div>
@@ -295,6 +390,63 @@ export default function RoleSelectionClient() {
                   error={errors.date_of_birth}
                   required
                 />
+              )}
+
+              {formData.role === "broker" && (
+                <>
+                  <Input
+                    label="Real Estate License Number"
+                    type="text"
+                    value={formData.license_number || ""}
+                    onChange={(e) =>
+                      handleInputChange("license_number", e.target.value)
+                    }
+                    error={errors.license_number}
+                    placeholder="Enter your license number"
+                    required
+                  />
+                  <Input
+                    label="MLS Number"
+                    type="text"
+                    value={formData.mls_number || ""}
+                    onChange={(e) =>
+                      handleInputChange("mls_number", e.target.value)
+                    }
+                    error={errors.mls_number}
+                    placeholder="Enter your MLS number (optional)"
+                  />
+                </>
+              )}
+
+              {formData.role === "supporting_professional" && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground">
+                    Professional Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.professional_type || ""}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "professional_type",
+                        e.target.value as ProfessionalType
+                      )
+                    }
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select your professional type</option>
+                    {Object.values(ProfessionalType).map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.professional_type && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.professional_type}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 
