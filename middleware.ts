@@ -3,27 +3,41 @@ import { NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
 
 export async function middleware(request: NextRequest) {
-  const authResponse = await auth0.middleware(request);
-
-  // if path starts with /auth, let the auth middleware handle it
+  // Only run the Auth0 middleware for /auth routes (callbacks, login, logout).
+  // For protected routes we will use auth0.getSession to avoid returning
+  // intermediate auth redirect responses that can cause extra middleware passes.
   if (request.nextUrl.pathname.startsWith("/auth")) {
-    return authResponse;
+    return await auth0.middleware(request);
   }
 
   const publicRoutes = ["/"];
   const isPublicRoute = publicRoutes.some(
     (route) => request.nextUrl.pathname === route
   );
-  const protectedRoutes = ["/agent", "/client", "/signup"];
-  const viewerRoutes = ["/viewer"];
+  // Allow explicitly public routes to pass through without session checks.
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+  const protectedRoutes = [
+    "/agent",
+    "/client",
+    "/broker",
+    "/signup",
+    "/logging-in",
+    "/viewer",
+  ];
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
-  const isViewerRoute = viewerRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  );
 
-  if (isProtectedRoute) {
+  // Only enforce protected-route redirects for navigation requests (browsers
+  // requesting HTML). This prevents background XHR/fetch calls from being
+  // redirected and re-triggering the middleware repeatedly.
+  const acceptHeader = request.headers.get("accept") || "";
+  const isNavigation =
+    request.method === "GET" && acceptHeader.includes("text/html");
+
+  if (isProtectedRoute && isNavigation) {
     try {
       const session = await auth0.getSession(request);
 
@@ -36,19 +50,39 @@ export async function middleware(request: NextRequest) {
       const profileType = session.user.profile?.profileType;
 
       console.log("Usuario autenticado-Middleware:", session.user.email);
-      if (
-        request.nextUrl.pathname.startsWith("/agent") &&
-        profileType !== "real_estate_agent"
-      ) {
-        return NextResponse.redirect(new URL("/client/dashboard", request.url));
-      }
+      console.log("Tipo de perfil:", profileType);
 
-      // Si intenta acceder a /client y no es cliente, redirige
-      if (
-        request.nextUrl.pathname.startsWith("/client") &&
-        profileType !== "client"
-      ) {
-        return NextResponse.redirect(new URL("/agent/dashboard", request.url));
+      // /viewer routes are accessible by any authenticated user (agents, clients, supporting professionals)
+      // so we skip profile-based access checks for those routes
+      const isViewerRoute = request.nextUrl.pathname.startsWith("/viewer");
+
+      if (!isViewerRoute) {
+        // Redirecciones basadas en el tipo de perfil usando utilidad centralizada
+        const { canAccessRoute, getCorrectRoute } = await import(
+          "./lib/profile-utils"
+        );
+
+        if (!canAccessRoute(profileType, request.nextUrl.pathname)) {
+          const correctRoute = getCorrectRoute(profileType);
+          console.log(
+            `Usuario con perfil ${profileType} intentó acceder a ${request.nextUrl.pathname}, redirigiendo a ${correctRoute}`
+          );
+
+          // If the correct route is the same as the current one (e.g. profileType undefined
+          // and user is already on /signup/role-selection), allow the request to proceed
+          // to avoid redirect loops.
+          if (
+            correctRoute === request.nextUrl.pathname ||
+            request.nextUrl.pathname.startsWith("/signup")
+          ) {
+            console.log(
+              `Ya en la ruta correcta (${request.nextUrl.pathname}), permitiendo acceso (short-circuit)`
+            );
+            return NextResponse.next();
+          }
+
+          return NextResponse.redirect(new URL(correctRoute, request.url));
+        }
       }
     } catch (error) {
       console.error("Error verificando sesión:", error);
@@ -58,29 +92,14 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Handle viewer routes - require authentication but allow any user type
-  if (isViewerRoute) {
-    try {
-      const session = await auth0.getSession(request);
-
-      if (!session?.user) {
-        console.log(
-          "Usuario no autenticado para viewer, redirigiendo al login"
-        );
-        const loginUrl = new URL("/auth/login", request.url);
-        loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
-        return NextResponse.redirect(loginUrl);
-      }
-
-      console.log("Usuario autenticado para viewer:", session.user.email);
-    } catch (error) {
-      console.error("Error verificando sesión para viewer:", error);
-      const loginUrl = new URL("/auth/login", request.url);
-      loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  // If this is a protected route but not a navigation request (e.g. an XHR/fetch),
+  // allow it to proceed so APIs and background calls aren't redirected.
+  if (isProtectedRoute && !isNavigation) {
+    return NextResponse.next();
   }
-  return authResponse;
+
+  // Handle viewer routes - require authentication but allow any user type
+  return NextResponse.next();
 }
 
 export const config = {
