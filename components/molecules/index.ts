@@ -3,6 +3,13 @@ export { default as LoadingState } from "./LoadingState";
 export { default as ErrorState } from "./ErrorState";
 export { default as EmptyState } from "./EmptyState";
 
+// Brokerage Components
+export { AccessCodeCard } from "./AccessCodeCard";
+export { BrokerageInfoCard } from "./BrokerageInfoCard";
+export { JoinBrokerageDialog } from "./JoinBrokerageDialog";
+export { MemberCard } from "./MemberCard";
+export { TeamMemberTabs } from "./TeamMemberTabs";
+
 // Otros componentes moleculares existentes
 export { default as ChecklistHeader } from "./ChecklistHeader";
 export { default as ChecklistItem } from "./ChecklistItem";
