@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Document } from "@/types/documents";
 import { getTransactionDocument } from "@/lib/api/transaction-documents";
 import { useToast } from "@/hooks/use-toast";
@@ -9,7 +9,7 @@ export function useDocumentViewer(transactionId: string, documentId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDocument = async () => {
+  const fetchDocument = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -30,13 +30,13 @@ export function useDocumentViewer(transactionId: string, documentId: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [transactionId, documentId, toast]);
 
   useEffect(() => {
     if (transactionId && documentId) {
       fetchDocument();
     }
-  }, [transactionId, documentId]);
+  }, [transactionId, documentId, fetchDocument]);
 
   return {
     document,

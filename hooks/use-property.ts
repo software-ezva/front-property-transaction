@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Property } from "@/types/properties";
 import { getProperty, updateProperty } from "@/lib/api/properties";
 
@@ -7,7 +7,7 @@ export function useProperty(id: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProperty = async () => {
+  const fetchProperty = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -18,7 +18,7 @@ export function useProperty(id: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   const handleUpdateProperty = async (data: Partial<Property>) => {
     try {
@@ -34,7 +34,7 @@ export function useProperty(id: string) {
     if (id) {
       fetchProperty();
     }
-  }, [id]);
+  }, [id, fetchProperty]);
 
   return {
     property,

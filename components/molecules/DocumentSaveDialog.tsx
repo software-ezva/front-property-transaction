@@ -29,10 +29,12 @@ export default function DocumentSaveDialog({
 
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
-      setIsReadyToSign(false); // Reset checkbox when dialog opens
-    } else {
-      setIsVisible(false);
+      // Small delay to ensure the transition plays after mount
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+        setIsReadyToSign(false); // Reset checkbox when dialog opens
+      }, 10);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -88,7 +90,7 @@ export default function DocumentSaveDialog({
         <div className="p-6 space-y-4">
           <p className="text-muted-foreground leading-relaxed">
             Are you sure you want to save the changes to{" "}
-            <strong>"{documentTitle}"</strong>?
+            <strong>&quot;{documentTitle}&quot;</strong>?
           </p>
 
           {/* Ready for Review Status */}

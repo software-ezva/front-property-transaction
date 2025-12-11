@@ -52,6 +52,28 @@ export function usePDFEditor({
   );
   const pdfBytesRef = useRef<Uint8Array | null>(null);
 
+  // Cargar anotaciones existentes
+  const loadExistingAnnotations = useCallback(async () => {
+    // Solo intentar cargar si tenemos un documentId válido y está habilitado
+    if (skipApiCalls || !loadExistingData || !documentId) {
+      return;
+    }
+
+    try {
+      const response = await apiClient.get(
+        `${ENDPOINTS.internal.DOCUMENTS}/${documentId}/annotations`
+      );
+      if (response.annotations) {
+        setAnnotations(response.annotations);
+      }
+      if (response.signatures) {
+        setSignatures(response.signatures);
+      }
+    } catch (err) {
+      console.warn("No existing annotations found:", err);
+    }
+  }, [documentId, loadExistingData, skipApiCalls]);
+
   // Cargar PDF para edición
   const loadPDF = useCallback(async () => {
     setIsLoading(true);
@@ -87,29 +109,7 @@ export function usePDFEditor({
     } finally {
       setIsLoading(false);
     }
-  }, [documentUrl, loadExistingData, skipApiCalls]);
-
-  // Cargar anotaciones existentes
-  const loadExistingAnnotations = useCallback(async () => {
-    // Solo intentar cargar si tenemos un documentId válido y está habilitado
-    if (skipApiCalls || !loadExistingData || !documentId) {
-      return;
-    }
-
-    try {
-      const response = await apiClient.get(
-        `${ENDPOINTS.internal.DOCUMENTS}/${documentId}/annotations`
-      );
-      if (response.annotations) {
-        setAnnotations(response.annotations);
-      }
-      if (response.signatures) {
-        setSignatures(response.signatures);
-      }
-    } catch (err) {
-      console.warn("No existing annotations found:", err);
-    }
-  }, [documentId, loadExistingData, skipApiCalls]);
+  }, [documentUrl, skipApiCalls, loadExistingAnnotations]);
 
   // Agregar anotación
   const addAnnotation = useCallback(

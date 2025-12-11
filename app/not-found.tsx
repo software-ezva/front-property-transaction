@@ -14,8 +14,8 @@ export default function NotFound() {
         Page Not Found
       </h1>
       <p className="text-muted-foreground max-w-md mb-8 text-lg animate-in slide-in-from-bottom-4 duration-700 delay-300 fill-mode-both">
-        Sorry, we couldn't find the page you're looking for. It might have been
-        moved or doesn't exist.
+        Sorry, we couldn&apos;t find the page you&apos;re looking for. It might
+        have been moved or doesn&apos;t exist.
       </p>
       <div className="flex gap-4 animate-in slide-in-from-bottom-4 duration-700 delay-500 fill-mode-both">
         <Link href="/">

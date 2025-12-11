@@ -1,6 +1,8 @@
 "use client";
 
-import { MapPin, Bed, Bath, Square } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { MapPin, Ruler, BedDouble, Bath, Home, Square } from "lucide-react";
 import Button from "../atoms/Button";
 import Badge from "../atoms/Badge";
 
@@ -51,11 +53,13 @@ const PropertyCard = ({
 
   return (
     <div className="bg-card rounded-lg overflow-hidden shadow-sm border border-border hover:shadow-md transition-shadow">
-      <div className="relative group">
-        <img
+      <div className="relative group h-48 w-full">
+        <Image
           src={displayImage}
           alt={displayTitle}
-          className="w-full h-48 object-cover"
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         {property.status && (
           <div className="absolute top-3 right-3">
@@ -89,7 +93,7 @@ const PropertyCard = ({
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
-              <Bed className="w-4 h-4 mr-1" />
+              <BedDouble className="w-4 h-4 mr-1" />
               <span>{property.bedrooms}</span>
             </div>
             <div className="flex items-center">

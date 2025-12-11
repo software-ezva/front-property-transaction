@@ -363,7 +363,8 @@ function CreateWorkflowTemplateClient() {
             {formData.checklists.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <p>
-                  No checklists added yet. Click "Add Checklist" to get started.
+                  No checklists added yet. Click &quot;Add Checklist&quot; to
+                  get started.
                 </p>
               </div>
             ) : (

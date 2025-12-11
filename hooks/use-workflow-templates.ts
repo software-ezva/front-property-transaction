@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { WorkflowTemplate, TransactionType } from "@/types/workflow-templates";
 import {
   getTemplates,
@@ -15,7 +15,7 @@ export function useWorkflowTemplates(transactionType?: TransactionType) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -36,7 +36,7 @@ export function useWorkflowTemplates(transactionType?: TransactionType) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [transactionType]);
 
   const handleCreateTemplate = async (data: CreateWorkflowTemplateRequest) => {
     try {
@@ -74,7 +74,7 @@ export function useWorkflowTemplates(transactionType?: TransactionType) {
 
   useEffect(() => {
     fetchTemplates();
-  }, [transactionType]);
+  }, [transactionType, fetchTemplates]);
 
   return {
     templates,
@@ -95,7 +95,7 @@ export function useWorkflowTemplate(id: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTemplate = async () => {
+  const fetchTemplate = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -108,7 +108,7 @@ export function useWorkflowTemplate(id: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   const handleUpdateTemplate = async (data: UpdateWorkflowTemplateRequest) => {
     try {
@@ -124,7 +124,7 @@ export function useWorkflowTemplate(id: string) {
     if (id) {
       fetchTemplate();
     }
-  }, [id]);
+  }, [id, fetchTemplate]);
 
   return {
     template,

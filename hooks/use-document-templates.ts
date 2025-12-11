@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   DocumentTemplate,
   DocumentCategory,
@@ -16,7 +16,7 @@ export function useDocumentTemplates(category?: DocumentCategory) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -27,7 +27,7 @@ export function useDocumentTemplates(category?: DocumentCategory) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [category]);
 
   const handleCreateTemplate = async (data: CreateDocumentTemplateRequest) => {
     try {
@@ -52,7 +52,7 @@ export function useDocumentTemplates(category?: DocumentCategory) {
 
   useEffect(() => {
     fetchTemplates();
-  }, [category]);
+  }, [fetchTemplates]);
 
   return {
     templates,

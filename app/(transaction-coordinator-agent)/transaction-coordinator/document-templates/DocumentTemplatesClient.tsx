@@ -504,7 +504,7 @@ export default function DocumentTemplatesClient() {
                           No Document Available
                         </h3>
                         <p className="text-muted-foreground">
-                          This template doesn't have a valid document URL.
+                          This template doesn&apos;t have a valid document URL.
                         </p>
                       </div>
                     </div>

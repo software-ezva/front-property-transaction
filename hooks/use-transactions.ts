@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Transaction, TransactionStatus } from "@/types/transactions";
 import {
   getTransactions,
@@ -105,7 +105,7 @@ export function useTransaction(transactionId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTransaction = async () => {
+  const fetchTransaction = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -118,7 +118,7 @@ export function useTransaction(transactionId: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [transactionId]);
 
   const handleUpdateTransaction = async (data: UpdateTransactionRequest) => {
     try {
@@ -146,7 +146,7 @@ export function useTransaction(transactionId: string) {
     if (transactionId) {
       fetchTransaction();
     }
-  }, [transactionId]);
+  }, [transactionId, fetchTransaction]);
 
   return {
     transaction,

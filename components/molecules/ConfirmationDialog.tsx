@@ -33,9 +33,9 @@ export default function ConfirmationDialog({
 
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
+      // Small delay to ensure the transition plays after mount
+      const timer = setTimeout(() => setIsVisible(true), 10);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 

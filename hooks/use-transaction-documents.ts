@@ -93,7 +93,7 @@ export function useTransactionDocuments(transactionId: string) {
   const [templatesError, setTemplatesError] = useState<string | null>(null);
 
   // Fetch documents from API
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       setDocumentsLoading(true);
       setDocumentsError(null);
@@ -104,10 +104,10 @@ export function useTransactionDocuments(transactionId: string) {
     } finally {
       setDocumentsLoading(false);
     }
-  };
+  }, [transactionId]);
 
   // Fetch document templates from API
-  const fetchDocumentTemplates = async () => {
+  const fetchDocumentTemplates = useCallback(async () => {
     try {
       setTemplatesLoading(true);
       setTemplatesError(null);
@@ -120,21 +120,25 @@ export function useTransactionDocuments(transactionId: string) {
     } finally {
       setTemplatesLoading(false);
     }
-  };
+  }, []);
 
   // Initialize documents when component mounts
   useEffect(() => {
     if (transactionId) {
       fetchDocuments();
     }
-  }, [transactionId]);
+  }, [transactionId, fetchDocuments]);
 
   // Load templates when modal opens
   useEffect(() => {
     if (isAddDocumentModalOpen && documentTemplates.length === 0) {
       fetchDocumentTemplates();
     }
-  }, [isAddDocumentModalOpen]);
+  }, [
+    isAddDocumentModalOpen,
+    documentTemplates.length,
+    fetchDocumentTemplates,
+  ]);
 
   const handleTemplateToggle = (templateId: string) => {
     const newSelected = new Set(selectedTemplates);

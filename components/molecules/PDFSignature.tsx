@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { Save, PenTool, Download, Undo, X, Trash2, Check } from "lucide-react";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
@@ -153,10 +154,10 @@ export default function PDFSignature({
   };
 
   // Limpiar canvas
-  const clearCanvas = () => {
+  const clearCanvas = useCallback(() => {
     initCanvas();
     setSignatureData("");
-  };
+  }, [initCanvas]);
 
   // Confirmar firma
   const confirmSignature = useCallback(() => {
@@ -196,7 +197,7 @@ export default function PDFSignature({
     setIsSigning(false);
     setSignatureData("");
     clearCanvas();
-  }, []);
+  }, [clearCanvas]);
 
   // Guardar documento firmado
   const handleSign = async () => {
@@ -332,10 +333,13 @@ export default function PDFSignature({
                     }}
                   >
                     <div className="bg-white border-2 border-green-500 rounded p-2 shadow-lg">
-                      <img
+                      <Image
                         src={`data:image/png;base64,${signature.signatureData}`}
                         alt="Signature"
+                        width={96}
+                        height={24}
                         className="w-24 h-6 object-contain"
+                        unoptimized
                       />
                       <div className="text-xs text-center text-gray-600 mt-1">
                         {signature.signerName}
@@ -360,10 +364,13 @@ export default function PDFSignature({
                   className="flex items-center justify-between p-2 bg-background rounded border border-border"
                 >
                   <div className="flex items-center space-x-3">
-                    <img
+                    <Image
                       src={`data:image/png;base64,${signature.signatureData}`}
                       alt="Signature"
+                      width={64}
+                      height={16}
                       className="w-16 h-4 object-contain border rounded"
+                      unoptimized
                     />
                     <div>
                       <span className="text-sm font-medium text-foreground">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Transaction } from "@/types/transactions";
 import { apiClient } from "@/lib/api-internal";
 import { ENDPOINTS } from "@/lib/constants";
@@ -122,7 +122,7 @@ export function useClientTransaction(transactionId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTransaction = async () => {
+  const fetchTransaction = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -140,7 +140,7 @@ export function useClientTransaction(transactionId: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [transactionId]);
 
   /**
    * Permite al cliente agregar comentarios o solicitudes
@@ -186,7 +186,7 @@ export function useClientTransaction(transactionId: string) {
     if (transactionId) {
       fetchTransaction();
     }
-  }, [transactionId]);
+  }, [transactionId, fetchTransaction]);
 
   return {
     transaction,

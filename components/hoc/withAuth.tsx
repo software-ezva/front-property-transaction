@@ -22,12 +22,7 @@ export function withAuth<P extends object>(
   WrappedComponent: React.ComponentType<P & WithAuthReturn>,
   userType: "agent" | "client"
 ) {
-  const WithAuthComponent = (props: P) => {
-    const authHook =
-      userType === "agent"
-        ? useTransactionCoordinatorAgentAuth()
-        : useClientAuth();
-
+  const AuthRenderer = ({ authHook, props }: { authHook: any; props: P }) => {
     const {
       user,
       agentProfile,
@@ -38,7 +33,7 @@ export function withAuth<P extends object>(
       clientUserForHeader,
       isLoading,
       error,
-    } = authHook as any;
+    } = authHook;
 
     // Loading state
     if (isLoading) {
@@ -91,10 +86,25 @@ export function withAuth<P extends object>(
     );
   };
 
-  WithAuthComponent.displayName = `withAuth(${
-    WrappedComponent.displayName || WrappedComponent.name
-  })`;
-  return WithAuthComponent;
+  if (userType === "agent") {
+    const WithAgentAuth = (props: P) => {
+      const authHook = useTransactionCoordinatorAgentAuth();
+      return <AuthRenderer authHook={authHook} props={props} />;
+    };
+    WithAgentAuth.displayName = `withAuth(${
+      WrappedComponent.displayName || WrappedComponent.name
+    })`;
+    return WithAgentAuth;
+  } else {
+    const WithClientAuth = (props: P) => {
+      const authHook = useClientAuth();
+      return <AuthRenderer authHook={authHook} props={props} />;
+    };
+    WithClientAuth.displayName = `withAuth(${
+      WrappedComponent.displayName || WrappedComponent.name
+    })`;
+    return WithClientAuth;
+  }
 }
 
 // Convenience wrappers

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -50,13 +50,12 @@ export default function WorkflowTemplateDetailsClient({
   const [expandedChecklists, setExpandedChecklists] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [prevTemplateId, setPrevTemplateId] = useState<string | null>(null);
 
-  // Initialize expanded checklists when template loads
-  useEffect(() => {
-    if (template?.checklistTemplates) {
-      setExpandedChecklists(template.checklistTemplates.map((c) => c.id));
-    }
-  }, [template]);
+  if (template?.id && template.id !== prevTemplateId) {
+    setPrevTemplateId(template.id);
+    setExpandedChecklists(template.checklistTemplates?.map((c) => c.id) || []);
+  }
 
   if (isLoading || loadingTemplate) {
     return <LoadingState title="Loading template details..." />;

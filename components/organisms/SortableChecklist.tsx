@@ -157,7 +157,8 @@ export function SortableChecklist({
             </div>
             {checklist.items.length === 0 ? (
               <div className="text-center py-4 text-muted-foreground text-sm">
-                No items added yet. Click "Add Item" to add checklist items.
+                No items added yet. Click &quot;Add Item&quot; to add checklist
+                items.
               </div>
             ) : (
               <DndContext

@@ -28,7 +28,6 @@ const TransactionWithProgress = ({
     >
       <TransactionCard
         transaction={transaction}
-        userRole={userRole}
         onViewDetails={() => onViewDetails(transaction.transactionId)}
       />
 
@@ -39,7 +38,7 @@ const TransactionWithProgress = ({
             <div className="flex items-center">
               <CheckCircle className="w-4 h-4 text-accent mr-2" />
               <span className="text-sm text-accent font-medium">
-                {progressPercentage}% complete - You're making excellent
+                {progressPercentage}% complete - You&apos;re making excellent
                 progress! 🎉
               </span>
             </div>

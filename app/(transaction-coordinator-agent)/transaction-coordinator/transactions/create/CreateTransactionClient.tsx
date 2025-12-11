@@ -62,16 +62,6 @@ export default function CreateTransactionClient() {
     }
   }, [formData.transactionType, templates]);
 
-  const {
-    transactionCoordinatorAgentUser: agentUser,
-    transactionCoordinatorAgentProfile: agentProfile,
-  } = useTransactionCoordinatorAgentAuth();
-
-  // If we reach here, authentication was successful thanks to the layout
-  if (!agentUser || !agentProfile) {
-    return <div>Loading user data...</div>;
-  }
-
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -86,6 +76,16 @@ export default function CreateTransactionClient() {
     };
     fetchProperties();
   }, []);
+
+  const {
+    transactionCoordinatorAgentUser: agentUser,
+    transactionCoordinatorAgentProfile: agentProfile,
+  } = useTransactionCoordinatorAgentAuth();
+
+  // If we reach here, authentication was successful thanks to the layout
+  if (!agentUser || !agentProfile) {
+    return <div>Loading user data...</div>;
+  }
 
   interface TransactionFormData {
     propertyId: string;
