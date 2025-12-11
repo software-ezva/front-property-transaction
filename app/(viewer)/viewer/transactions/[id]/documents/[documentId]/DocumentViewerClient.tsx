@@ -18,7 +18,7 @@ import { DocumentStatus, type Document } from "@/types/documents";
 import { useDocumentViewer } from "@/hooks/use-document-viewer";
 import { checkDocumentForEdit } from "@/lib/api/transaction-documents";
 import { useToast } from "@/hooks/use-toast";
-import { useAgentAuth } from "@/hooks/use-agent-auth";
+import { useTransactionCoordinatorAgentAuth } from "@/hooks/use-transaction-coordinator-agent-auth";
 
 const getBadgeVariant = (
   status: DocumentStatus
@@ -52,7 +52,8 @@ export default function DocumentViewerClient({
 }: DocumentViewerClientProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { agentUser } = useAgentAuth();
+  const { transactionCoordinatorAgentUser: agentUser } =
+    useTransactionCoordinatorAgentAuth();
   const [isDetailsSidebarCollapsed, setIsDetailsSidebarCollapsed] =
     useState(false);
   const [isCheckingForEdit, setIsCheckingForEdit] = useState(false);
@@ -113,7 +114,7 @@ export default function DocumentViewerClient({
       sessionStorage.setItem(sessionKey, JSON.stringify(document));
     }
 
-    const editUrl = `/agent/transactions/${transactionId}/documents/${documentId}/edit`;
+    const editUrl = `/transaction-coordinator/transactions/${transactionId}/documents/${documentId}/edit`;
 
     router.push(editUrl);
   };
