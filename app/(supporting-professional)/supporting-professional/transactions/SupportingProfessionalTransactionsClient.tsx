@@ -2,13 +2,16 @@
 
 import type React from "react";
 import { useState } from "react";
-import { Search, FileText, Calendar, User } from "lucide-react";
-import TransactionCard from "@/components/molecules/TransactionCard";
-import { TransactionStatus } from "@/types/transactions";
-import Input from "@/components/atoms/Input";
+import { Plus } from "lucide-react";
+import Button from "@/components/atoms/Button";
+import JoinTransactionDialog from "@/components/molecules/JoinTransactionDialog";
 import { useSupportingProfessionalAuth } from "@/hooks/use-supporting-professional-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import PageTitle from "@/components/molecules/PageTitle";
+import TransactionStats from "@/components/organisms/transactions/TransactionStats";
+import TransactionFilters from "@/components/organisms/transactions/TransactionFilters";
+import TransactionList from "@/components/organisms/transactions/TransactionList";
+import { useTransactionFilters } from "@/hooks/use-transaction-filters";
 
 export default function SupportingProfessionalTransactionsClient() {
   const { supportingProfessionalUser, supportingProfessionalProfile } =
@@ -17,172 +20,67 @@ export default function SupportingProfessionalTransactionsClient() {
     transactions,
     loading: loadingTransactions,
     error,
+    refetch,
   } = useTransactions();
+
+  const {
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    filteredTransactions,
+  } = useTransactionFilters(transactions);
+
+  const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
 
   // If we get here, we already know authentication was successful thanks to the layout
   if (!supportingProfessionalUser || !supportingProfessionalProfile) {
     return <div>Loading user data...</div>;
   }
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  // Filtrado
-  const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch =
-      transaction.propertyAddress
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      (transaction.clientName || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || transaction.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Estadísticas
-  const transactionStats = [
-    {
-      title: "Total Transactions",
-      value: transactions.length,
-      icon: FileText,
-      color: "primary",
-    },
-    {
-      title: "In Progress",
-      value: transactions.filter((t) =>
-        [
-          "preparation",
-          "active",
-          "under_contract",
-          "pending",
-          "review",
-        ].includes(t.status)
-      ).length,
-      icon: Calendar,
-      color: "secondary",
-    },
-    {
-      title: "Sold/Leased",
-      value: transactions.filter((t) =>
-        ["sold", "leased", "completed"].includes(t.status)
-      ).length,
-      icon: User,
-      color: "accent",
-    },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageTitle
           title="Transactions"
           subtitle="View and monitor real estate transactions you're involved in."
         />
+        <Button onClick={() => setIsJoinDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Join with Code
+        </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {transactionStats.map((stat, index) => (
-          <div
-            key={index}
-            className="bg-card rounded-lg p-4 border border-border text-center"
-          >
-            <div className="flex items-center justify-center mb-2">
-              <stat.icon className="w-6 h-6 text-primary" />
-            </div>
-            <div className="text-2xl font-bold text-foreground">
-              {stat.value}
-            </div>
-            <div className="text-sm text-muted-foreground">{stat.title}</div>
-          </div>
-        ))}
-      </div>
+      <TransactionStats transactions={transactions} />
 
       {/* Filters */}
-      <div className="bg-card rounded-lg p-6 border border-border">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search by property or client..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-input rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="all">All statuses</option>
-              <option value={TransactionStatus.IN_PREPARATION}>
-                In Preparation
-              </option>
-              <option value={TransactionStatus.ACTIVE}>Active</option>
-              <option value={TransactionStatus.UNDER_CONTRACT}>
-                Under Contract
-              </option>
-              <option value={TransactionStatus.SOLD_LEASED}>Sold/Leased</option>
-              <option value={TransactionStatus.TERMINATED}>Terminated</option>
-              <option value={TransactionStatus.WITHDRAWN}>Withdrawn</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Error/Loading */}
-      {error && (
-        <div className="bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive text-center">
-          {error}
-        </div>
-      )}
-      {loadingTransactions && (
-        <div className="bg-card rounded-lg p-12 border border-border text-center">
-          <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Loading transactions...
-          </h3>
-        </div>
-      )}
+      <TransactionFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+      />
 
       {/* Transactions List */}
-      {!loadingTransactions && !error && (
-        <div className="space-y-4">
-          {filteredTransactions.length > 0 ? (
-            filteredTransactions.map((transaction) => (
-              <div
-                key={transaction.transactionId}
-                className="bg-card rounded-lg border border-border"
-              >
-                <TransactionCard
-                  transaction={transaction}
-                  userRole="supporting_professional"
-                  onViewDetails={() => {
-                    window.location.href = `/supporting-professional/transactions/${transaction.transactionId}`;
-                  }}
-                />
-              </div>
-            ))
-          ) : (
-            <div className="bg-card rounded-lg p-12 border border-border text-center">
-              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                No transactions found
-              </h3>
-              <p className="text-muted-foreground">
-                No transactions match the applied filters.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      <TransactionList
+        transactions={filteredTransactions}
+        loading={loadingTransactions}
+        error={error}
+        onViewDetails={(id) => {
+          window.location.href = `/supporting-professional/transactions/${id}`;
+        }}
+        emptyStateMessage="No transactions match the applied filters."
+      />
+
+      <JoinTransactionDialog
+        isOpen={isJoinDialogOpen}
+        onClose={() => setIsJoinDialogOpen(false)}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
     </div>
   );
 }
