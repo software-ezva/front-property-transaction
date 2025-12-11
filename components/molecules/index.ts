@@ -13,7 +13,6 @@ export { TeamMemberTabs } from "./TeamMemberTabs";
 // Otros componentes moleculares existentes
 export { default as ChecklistHeader } from "./ChecklistHeader";
 export { default as ChecklistItem } from "./ChecklistItem";
-export { default as CollapsibleStatsCard } from "./CollapsibleStatsCard";
 export { default as ConfirmationDialog } from "./ConfirmationDialog";
 export { default as DocumentCard } from "./DocumentCard";
 export { default as ItemEditForm } from "./ItemEditForm";
@@ -26,7 +25,6 @@ export { default as TemplateCard } from "./TemplateCard";
 export { default as TransactionCard } from "./TransactionCard";
 
 // Transaction Detail Components
-export { default as ClientAssignmentCard } from "./ClientAssignmentCard";
 export { default as PropertyDetailsCard } from "./PropertyDetailsCard";
 export { default as TransactionInfoCard } from "./TransactionInfoCard";
 export { default as TransactionNotesCard } from "./TransactionNotesCard";

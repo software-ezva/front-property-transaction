@@ -1,10 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import { Menu, Bell, User, LogOut } from "lucide-react";
-import Button from "../atoms/Button";
+import {
+  Menu,
+  Bell,
+  Search,
+  LogOut,
+  Settings,
+  User as UserIcon,
+} from "lucide-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { ENTERPRISE } from "@/utils/enterprise";
 import { ENDPOINTS } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -16,71 +42,130 @@ interface HeaderProps {
 }
 
 const Header = ({ onToggleSidebar, user }: HeaderProps) => {
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const pathname = usePathname();
+
+  // Helper to generate breadcrumbs from pathname
+  const generateBreadcrumbs = () => {
+    const paths = pathname.split("/").filter(Boolean);
+    return paths.map((path, index) => {
+      const href = `/${paths.slice(0, index + 1).join("/")}`;
+      const isLast = index === paths.length - 1;
+      return {
+        label: path.replace(/-/g, " "),
+        href,
+        isLast,
+      };
+    });
+  };
+
+  const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <header className="bg-card border-b border-border px-4 py-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleSidebar}
-            className="lg:hidden"
-          >
-            <Menu className="w-5 h-5" />
-          </Button>
+    <header className="flex h-16 items-center gap-4 border-b bg-background px-6 shadow-sm">
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebar}
+          className="lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
 
-          <div>
-            <h1 className="text-xl font-bold text-foreground font-primary">
-              {ENTERPRISE.name}
-            </h1>
-          </div>
+        <div className="hidden md:flex flex-col items-start justify-center -space-y-1">
+          <h1 className="text-lg font-semibold md:text-xl font-primary text-primary leading-none">
+            {ENTERPRISE.name}
+          </h1>
+          <Breadcrumb className="hidden lg:flex">
+            <BreadcrumbList className="sm:gap-1">
+              {breadcrumbs.map((crumb, index) => (
+                <div key={crumb.href} className="flex items-center">
+                  {index > 0 && (
+                    <BreadcrumbSeparator className="[&>svg]:size-2.5" />
+                  )}
+                  <BreadcrumbItem>
+                    <span
+                      className={`capitalize text-[10px] ${
+                        crumb.isLast
+                          ? "font-medium text-foreground"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {crumb.label}
+                    </span>
+                  </BreadcrumbItem>
+                </div>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
+      </div>
 
-        <div className="flex items-center space-x-3">
-          {/* <Button variant="ghost" size="sm">
-            <Bell className="w-5 h-5" />
-          </Button> */}
-
-          {user && (
-            <div className="relative">
+      <div className="flex flex-1 items-center justify-end gap-4">
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-2"
+                className="relative h-auto py-1.5 px-3 rounded-md border border-border flex items-center gap-3 hover:bg-accent"
               >
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-primary-foreground" />
-                </div>
-                <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {user.profile}
+                <span className="text-sm font-medium">
+                  {user.name.split(" ")[0]}
+                </span>
+                <Avatar className="h-8 w-8 border border-border rounded-md">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold rounded-md text-xs">
+                    {user.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .substring(0, 2)
+                      .toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user.name}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground capitalize">
+                    {user.profile.replace(/_/g, " ")}
                   </p>
                 </div>
-              </Button>
-
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg">
-                  <div className="py-1">
-                    <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-accent">
-                      <User className="w-4 h-4 mr-2" />
-                      ProfileMOCK
-                    </button>
-                    <a href={ENDPOINTS.auth0.LOGOUT}>
-                      <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-accent">
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
-                      </button>
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {/* <DropdownMenuItem asChild>
+                <Link href="/profile" className="cursor-pointer w-full flex">
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings" className="cursor-pointer w-full flex">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator /> */}
+              <DropdownMenuItem
+                asChild
+                className="text-destructive focus:text-destructive"
+              >
+                <a
+                  href={ENDPOINTS.auth0.LOGOUT}
+                  className="cursor-pointer w-full flex items-center"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   );

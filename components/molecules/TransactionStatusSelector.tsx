@@ -13,6 +13,7 @@ interface TransactionStatusSelectorProps {
   currentStatus: string;
   onStatusChange: (newStatus: string) => void;
   disabled?: boolean;
+  readOnly?: boolean;
 }
 
 const statusVariant = {
@@ -37,11 +38,30 @@ export default function TransactionStatusSelector({
   currentStatus,
   onStatusChange,
   disabled = false,
+  readOnly = false,
 }: TransactionStatusSelectorProps) {
   const handleStatusChange = (newStatus: string) => {
     if (currentStatus === newStatus) return;
     onStatusChange(newStatus);
   };
+
+  if (readOnly) {
+    return (
+      <div className="w-[170px] h-8 px-2 py-0 flex items-center">
+        <Badge
+          variant={
+            statusVariant[currentStatus as keyof typeof statusVariant] ||
+            "default"
+          }
+          className="w-full justify-center px-3 py-1 text-xs font-semibold cursor-default"
+        >
+          {statusOptions
+            .find((opt) => opt.value === currentStatus)
+            ?.label.toUpperCase()}
+        </Badge>
+      </div>
+    );
+  }
 
   return (
     <Select

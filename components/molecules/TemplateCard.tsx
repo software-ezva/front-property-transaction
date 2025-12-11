@@ -7,7 +7,6 @@ import React from "react";
 interface TemplateCardProps {
   template: any;
   getTransactionTypeLabel: (type: string) => string;
-  onEdit: (id: string) => void;
   onDuplicate: (template: any) => void;
   onDelete: (id: string) => void;
 }
@@ -15,7 +14,6 @@ interface TemplateCardProps {
 const TemplateCard: React.FC<TemplateCardProps> = ({
   template,
   getTransactionTypeLabel,
-  onEdit,
   onDuplicate,
   onDelete,
 }) => {
@@ -61,17 +59,25 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <div className="flex items-center space-x-2">
-            <Link href={`/agent/workflow-templates/${template.id}`} passHref legacyBehavior>
+            <Link
+              href={`/transaction-coordinator/workflow-templates/${template.id}`}
+              passHref
+              legacyBehavior
+            >
               <Button asChild variant="outline" size="sm">
-                  <Settings className="w-4 h-4 mr-2" />
-                  View Details
+                <Settings className="w-4 h-4 mr-2" />
+                View Details
               </Button>
             </Link>
           </div>
           <div className="flex items-center space-x-1">
-            <Link href={`/agent/workflow-templates/${template.id}/edit`} passHref legacyBehavior>
+            <Link
+              href={`/transaction-coordinator/workflow-templates/${template.id}/edit`}
+              passHref
+              legacyBehavior
+            >
               <Button asChild variant="ghost" size="sm" title="Edit template">
-                  <Edit className="w-4 h-4" />
+                <Edit className="w-4 h-4" />
               </Button>
             </Link>
             <Button

@@ -6,11 +6,13 @@ import { Transaction } from "@/types/transactions";
 interface TransactionNotesCardProps {
   transaction: Transaction;
   onSaveNotes: (notes: string) => Promise<void>;
+  readOnly?: boolean;
 }
 
 export default function TransactionNotesCard({
   transaction,
   onSaveNotes,
+  readOnly = false,
 }: TransactionNotesCardProps) {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [editedNotes, setEditedNotes] = useState("");
@@ -52,7 +54,7 @@ export default function TransactionNotesCard({
           <FileText className="w-5 h-5 text-primary" />
           <h3 className="text-lg font-semibold text-foreground">Notes</h3>
         </div>
-        {!isEditingNotes && (
+        {!isEditingNotes && !readOnly && (
           <Button variant="outline" size="sm" onClick={handleStartEditingNotes}>
             <Edit className="w-4 h-4" />
           </Button>

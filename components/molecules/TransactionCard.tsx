@@ -31,20 +31,18 @@ interface TransactionCardProps {
     status: string;
     additionalNotes?: string | null;
     propertyValue: number;
-    clientName: string | null;
+    clientName?: string | null;
     completedWorkflowItems: number;
     totalWorkflowItems: number;
     nextIncompleteItemDate?: string | null;
     createdAt: string;
     updatedAt?: string;
   };
-  userRole: "agent" | "client" | "broker" | "supporting_professional";
   onViewDetails?: (id: string) => void;
 }
 
 const TransactionCard: React.FC<TransactionCardProps> = ({
   transaction,
-  userRole,
   onViewDetails,
 }) => {
   const [showNotes, setShowNotes] = useState(false);
@@ -109,19 +107,15 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
 
       {/* Core Information Section */}
       <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-        <div className="flex items-center">
-          <User className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
-          <div>
-            <div className="text-xs text-muted-foreground">Client</div>
-            <div
-              className={
-                transaction.clientName ? "text-foreground" : "text-warning"
-              }
-            >
-              {transaction.clientName || "Not assigned"}
+        {transaction.clientName && (
+          <div className="flex items-center">
+            <User className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+            <div>
+              <div className="text-xs text-muted-foreground">Client</div>
+              <div className="text-foreground">{transaction.clientName}</div>
             </div>
           </div>
-        </div>
+        )}
         <div className="flex items-center">
           <DollarSign className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
           <div>

@@ -1,10 +1,13 @@
 interface TransactionTabsProps {
-  activeTab: "overview" | "timeline" | "documents";
-  onTabChange: (tabId: "overview" | "timeline" | "documents") => void;
+  activeTab: "overview" | "timeline" | "documents" | "people";
+  onTabChange: (
+    tabId: "overview" | "timeline" | "documents" | "people"
+  ) => void;
 }
 
 const tabs = [
   { id: "overview", label: "Overview" },
+  { id: "people", label: "People" },
   { id: "timeline", label: "Timeline" },
   { id: "documents", label: "Documents" },
 ] as const;

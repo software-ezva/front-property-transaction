@@ -25,6 +25,7 @@ interface DocumentsListProps {
   onViewDocument?: (document: Document) => void;
   onArchiveDocument?: (document: Document) => void;
   onRetry?: () => void;
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -36,6 +37,7 @@ export default function DocumentsList({
   onViewDocument,
   onArchiveDocument,
   onRetry,
+  readOnly = false,
   className = "",
 }: DocumentsListProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -122,7 +124,7 @@ export default function DocumentsList({
             Manage all documents related to this transaction
           </p>
         </div>
-        {onAddDocuments && (
+        {onAddDocuments && !readOnly && (
           <Button onClick={onAddDocuments}>
             <Plus className="w-4 h-4 mr-2" />
             Add Documents
@@ -182,6 +184,7 @@ export default function DocumentsList({
               document={document}
               onView={onViewDocument}
               onArchive={onArchiveDocument}
+              readOnly={readOnly}
             />
           ))
         ) : (
@@ -199,14 +202,16 @@ export default function DocumentsList({
               !searchTerm &&
               selectedCategory === "all" &&
               selectedStatus === "all" &&
-              onAddDocuments
+              onAddDocuments &&
+              !readOnly
                 ? "Add Your First Document"
                 : undefined
             }
             onAction={
               !searchTerm &&
               selectedCategory === "all" &&
-              selectedStatus === "all"
+              selectedStatus === "all" &&
+              !readOnly
                 ? onAddDocuments
                 : undefined
             }
