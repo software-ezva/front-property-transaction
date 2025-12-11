@@ -1,12 +1,15 @@
 import { apiClient } from "@/lib/api-internal";
 import { ENDPOINTS } from "@/lib/constants";
-import { Transaction, TransactionStatus } from "@/types/transactions";
+import {
+  Transaction,
+  TransactionStatus,
+  TransactionPeople,
+} from "@/types/transactions";
 import type { TransactionUpdatePayload } from "@/types/transactions/transactions";
 
 export interface CreateTransactionRequest {
   propertyId: string;
   workflowTemplateId: string;
-  clientId?: string;
   additionalNotes?: string;
 }
 
@@ -17,7 +20,6 @@ export interface CreateTransactionResponse {
 
 export interface UpdateTransactionRequest {
   status?: string;
-  clientId?: string;
   additionalNotes?: string;
 }
 
@@ -57,10 +59,6 @@ export class TransactionApiClient {
       workflowTemplateId: data.workflowTemplateId,
     };
 
-    if (data.clientId) {
-      payload.clientId = data.clientId;
-    }
-
     if (data.additionalNotes && data.additionalNotes.trim() !== "") {
       payload.additionalNotes = data.additionalNotes;
     }
@@ -87,10 +85,6 @@ export class TransactionApiClient {
       payload.status = data.status;
     }
 
-    if (data.clientId) {
-      payload.clientId = data.clientId;
-    }
-
     if (data.additionalNotes !== undefined) {
       payload.additionalNotes = data.additionalNotes;
     }
@@ -115,6 +109,33 @@ export class TransactionApiClient {
       }
     );
   }
+
+  /**
+   * Get people involved in the transaction
+   */
+  static async getTransactionPeople(
+    transactionId: string
+  ): Promise<TransactionPeople> {
+    return apiClient.get<TransactionPeople>(
+      ENDPOINTS.internal.TRANSACTION_PEOPLE(transactionId),
+      {
+        errorTitle: "Error loading transaction people",
+      }
+    );
+  }
+
+  /**
+   * Regenerate transaction access code
+   */
+  static async regenerateAccessCode(transactionId: string): Promise<void> {
+    await apiClient.post(
+      ENDPOINTS.internal.TRANSACTION_REGENERATE_ACCESS_CODE(transactionId),
+      {},
+      {
+        errorTitle: "Error regenerating access code",
+      }
+    );
+  }
 }
 
 // Export individual methods for convenience
@@ -124,4 +145,6 @@ export const {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  getTransactionPeople,
+  regenerateAccessCode,
 } = TransactionApiClient;

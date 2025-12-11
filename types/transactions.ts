@@ -1,6 +1,5 @@
 export interface PatchTransaction {
   status?: string;
-  clientId?: string;
   additionalNotes?: string;
 }
 export enum TransactionStatus {
@@ -21,7 +20,6 @@ export interface Transaction {
   updatedAt: string;
   propertyAddress: string;
   propertyValue: number;
-  clientName: string | null;
   totalWorkflowItems: number;
   completedWorkflowItems: number;
   nextIncompleteItemDate: string | null;
@@ -30,6 +28,22 @@ export interface Transaction {
   propertySize?: number;
   propertyBedrooms?: number;
   propertyBathrooms?: number;
-  clientEmail?: string;
-  clientPhoneNumber?: string;
+}
+
+export interface PersonInfo {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+}
+
+export interface SupportingProfessionalInfo extends PersonInfo {
+  professionOf: string;
+}
+
+export interface TransactionPeople {
+  accessCode: string;
+  client: PersonInfo | null;
+  realEstateAgent: PersonInfo | null;
+  supportingProfessionals: SupportingProfessionalInfo[];
 }
