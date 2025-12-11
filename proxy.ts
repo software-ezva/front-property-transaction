@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth0 } from "./lib/auth0";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Only run the Auth0 middleware for /auth routes (callbacks, login, logout).
   // For protected routes we will use auth0.getSession to avoid returning
   // intermediate auth redirect responses that can cause extra middleware passes.
