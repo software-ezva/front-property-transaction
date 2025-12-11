@@ -19,3 +19,20 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const result = await ApiServerClient.post(ENDPOINTS.api.PROPERTIES, body);
+    return NextResponse.json(result, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        error: error.message || "Error creating property",
+        details: error.data?.message || error.details,
+        status: error.status || 500,
+      },
+      { status: error.status || 500 }
+    );
+  }
+}
