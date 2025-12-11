@@ -1,84 +1,25 @@
-import { Calendar, Clock, ArrowRight } from "lucide-react";
+"use client";
+
+import { Calendar, Clock, ArrowRight, RefreshCw } from "lucide-react";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
 import Link from "next/link";
 import { ItemStatus } from "@/types/workflow";
+import Input from "@/components/atoms/Input";
+import LoadingState from "@/components/molecules/LoadingState";
+import { useUpcomingTasks } from "@/hooks/use-upcoming-tasks";
 
-interface UpcomingTaskItem {
-  transactionId: string;
-  description: string;
-  order: number;
-  status: ItemStatus;
-  createdAt: Date;
-  updatedAt: Date;
-  expectClosingDate?: Date | null;
-}
+export default function UpcomingTasks() {
+  const { tasks, isLoading, error, days, setDays, refresh } =
+    useUpcomingTasks();
 
-interface UpcomingTasksProps {
-  tasks?: UpcomingTaskItem[];
-}
+  const handleDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value > 0) {
+      setDays(value);
+    }
+  };
 
-// Mock data for upcoming tasks
-const mockUpcomingTasks: UpcomingTaskItem[] = [
-  {
-    transactionId: "txn_001",
-    description: "Property Appraisal Review",
-    order: 5,
-    status: ItemStatus.NOT_STARTED,
-    createdAt: new Date("2025-01-12"),
-    updatedAt: new Date("2025-01-12"),
-    expectClosingDate: new Date("2025-09-07"), // Overdue (2 days ago)
-  },
-  {
-    transactionId: "txn_002",
-    description: "Home Inspection Report",
-    order: 3,
-    status: ItemStatus.IN_PROGRESS,
-    createdAt: new Date("2025-01-10"),
-    updatedAt: new Date("2025-01-15"),
-    expectClosingDate: new Date("2025-09-08"), // Overdue (1 day ago)
-  },
-  {
-    transactionId: "txn_003",
-    description: "Final Walkthrough with Client",
-    order: 11,
-    status: ItemStatus.NOT_STARTED,
-    createdAt: new Date("2025-01-08"),
-    updatedAt: new Date("2025-01-08"),
-    expectClosingDate: new Date("2025-09-09"), // Due Today
-  },
-  {
-    transactionId: "txn_001",
-    description: "Closing Document Preparation",
-    order: 8,
-    status: ItemStatus.IN_PROGRESS,
-    createdAt: new Date("2025-01-14"),
-    updatedAt: new Date("2025-01-16"),
-    expectClosingDate: new Date("2025-09-10"), // Due Tomorrow
-  },
-  {
-    transactionId: "txn_002",
-    description: "Title Insurance Verification",
-    order: 7,
-    status: ItemStatus.NOT_STARTED,
-    createdAt: new Date("2025-01-11"),
-    updatedAt: new Date("2025-01-11"),
-    expectClosingDate: new Date("2025-09-12"), // Due in 3 days
-  },
-  {
-    transactionId: "txn_004",
-    description: "Mortgage Approval Documentation",
-    order: 4,
-    status: ItemStatus.IN_PROGRESS,
-    createdAt: new Date("2025-01-09"),
-    updatedAt: new Date("2025-01-20"),
-    expectClosingDate: new Date("2025-09-15"), // Due in 6 days
-  },
-];
-
-export default function UpcomingTasks({
-  tasks = mockUpcomingTasks,
-}: UpcomingTasksProps) {
   const getStatusBadge = (status: ItemStatus) => {
     switch (status) {
       case ItemStatus.COMPLETED:
@@ -137,15 +78,25 @@ export default function UpcomingTasks({
   // Sort tasks by due date (earliest first)
   const sortedTasks = tasks
     .filter((task) => task.expectClosingDate)
+    .map((task) => ({
+      ...task,
+      createdAtDate: new Date(task.createdAt),
+      updatedAtDate: new Date(task.updatedAt),
+      expectClosingDateObj: task.expectClosingDate
+        ? new Date(task.expectClosingDate)
+        : null,
+    }))
     .sort((a, b) => {
-      if (!a.expectClosingDate || !b.expectClosingDate) return 0;
-      return a.expectClosingDate.getTime() - b.expectClosingDate.getTime();
+      if (!a.expectClosingDateObj || !b.expectClosingDateObj) return 0;
+      return (
+        a.expectClosingDateObj.getTime() - b.expectClosingDateObj.getTime()
+      );
     });
 
   return (
     <div className="bg-card rounded-lg border border-border shadow-sm">
       <div className="p-4 border-b border-border bg-muted/30">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="p-1 bg-primary/10 rounded-md">
               <Calendar className="w-4 h-4 text-primary" />
@@ -155,94 +106,151 @@ export default function UpcomingTasks({
                 Upcoming Tasks
               </h2>
               <p className="text-xs text-muted-foreground">
-                Tasks with upcoming deadlines
+                Tasks expiring in the next {days} days
               </p>
             </div>
           </div>
-          <Badge variant="default" className="text-xs font-medium">
-            {sortedTasks.length}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <div className="w-24">
+              <Input
+                type="number"
+                min="1"
+                value={days}
+                onChange={handleDaysChange}
+                className="h-8 text-xs"
+                placeholder="Days"
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refresh}
+              disabled={isLoading}
+              className="h-8 w-8 p-0"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+              />
+            </Button>
+            <Badge variant="default" className="text-xs font-medium">
+              {sortedTasks.length}
+            </Badge>
+          </div>
         </div>
       </div>
 
       <div className="p-4">
-        {sortedTasks.length > 0 ? (
+        {isLoading ? (
+          <LoadingState title="Loading tasks..." />
+        ) : error ? (
+          <div className="text-center py-8 text-destructive">
+            <p>{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refresh}
+              className="mt-2"
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : sortedTasks.length > 0 ? (
           <div className="space-y-2">
-            {sortedTasks.slice(0, 10).map((task, index) => (
-              <div
-                key={`${task.transactionId}-${task.order}-${index}`}
-                className="border border-border rounded-lg p-2.5 bg-card hover:bg-accent/50 transition-all hover:shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0 pr-3">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <h3 className="font-medium text-sm text-foreground truncate">
-                        {task.description}
-                      </h3>
-                      <div className="shrink-0">
-                        {getStatusBadge(task.status)}
-                      </div>
+            {sortedTasks.slice(0, 10).map((task, index) => {
+              const daysUntilDue = task.expectClosingDateObj
+                ? getDaysUntilDue(task.expectClosingDateObj)
+                : 0;
+              const isOverdue = daysUntilDue < 0;
+              const isDueSoon = daysUntilDue >= 0 && daysUntilDue <= 2;
+
+              return (
+                <div
+                  key={`${task.transactionId}-${task.order}-${index}`}
+                  className="group flex flex-col gap-2 p-2.5 rounded-sm border border-border bg-card/50 hover:bg-accent/40 hover:shadow-sm transition-all duration-200"
+                >
+                  {/* Header: Title & Status */}
+                  <div className="flex items-start gap-3">
+                    {/* Order - Large & Visible */}
+                    <div className="shrink-0 flex items-center justify-center w-9 h-9 rounded-md bg-primary/5 font-bold text-lg text-primary border border-primary/10 shadow-sm">
+                      {task.order}
                     </div>
 
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-mono">
-                          #{task.order}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-medium text-sm text-foreground leading-tight line-clamp-2 pt-0.5">
+                          {task.description}
+                        </h3>
+                        <div className="shrink-0 scale-90 origin-top-right">
+                          {getStatusBadge(task.status)}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                        <span>
+                          Created{" "}
+                          {task.createdAtDate.toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
                         </span>
-                        <span className="text-muted-foreground">
-                          Created: {task.createdAt.toLocaleDateString()}
-                        </span>
-                        {task.updatedAt > task.createdAt && (
-                          <span className="text-blue-600 font-medium">
-                            Updated: {task.updatedAt.toLocaleDateString()}
+                        {task.updatedAtDate > task.createdAtDate && (
+                          <span className="text-blue-600/90 dark:text-blue-400 font-medium">
+                            Updated{" "}
+                            {task.updatedAtDate.toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                            })}
                           </span>
                         )}
                       </div>
-                      {task.expectClosingDate && (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Clock
-                            className={`w-4 h-4 ${
-                              getDaysUntilDue(task.expectClosingDate) < 0
-                                ? "text-red-500"
-                                : "text-muted-foreground"
-                            }`}
-                          />
-                          <div className="text-right">
-                            <div className="text-xs text-muted-foreground">
-                              Expected:{" "}
-                              {task.expectClosingDate.toLocaleDateString()}
-                            </div>
-                            <span
-                              className={`text-xs font-bold ${getDueDateColor(
-                                task.expectClosingDate
-                              )} ${
-                                getDaysUntilDue(task.expectClosingDate) < 0
-                                  ? "bg-red-100 px-1 py-0.5 rounded"
-                                  : ""
-                              }`}
-                            >
-                              {getDueDateText(task.expectClosingDate)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  <div className="shrink-0 border-l border-border pl-2">
-                    <Link href={`/agent/transactions/${task.transactionId}`}>
+                  {/* Footer: Due Date & Action */}
+                  <div className="flex items-center justify-between pt-0.5">
+                    {/* Due Date Info */}
+                    <div className="flex items-center gap-2 text-xs">
+                      {task.expectClosingDateObj && (
+                        <div
+                          className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm border text-[11px] ${
+                            isOverdue
+                              ? "bg-red-50 text-red-700 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30"
+                              : isDueSoon
+                              ? "bg-orange-50 text-orange-700 border-orange-100 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-900/30"
+                              : "bg-muted/50 text-muted-foreground border-border/50"
+                          }`}
+                        >
+                          <Clock className="w-3 h-3" />
+                          <span className="font-medium">
+                            {getDueDateText(task.expectClosingDateObj)}
+                          </span>
+                          <span className="opacity-60 border-l border-current pl-1.5 ml-0.5">
+                            {task.expectClosingDateObj.toLocaleDateString(
+                              undefined,
+                              { month: "short", day: "numeric" }
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Button */}
+                    <Link
+                      href={`/transaction-coordinator/transactions/${task.transactionId}`}
+                    >
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 hover:bg-primary/10"
+                        className="h-6 px-2 text-xs hover:bg-primary hover:text-primary-foreground group-hover:translate-x-0.5 transition-all"
                       >
-                        <ArrowRight className="w-4 h-4" />
+                        View
+                        <ArrowRight className="w-3 h-3 ml-1" />
                       </Button>
                     </Link>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {sortedTasks.length > 10 && (
               <div className="text-center pt-1">

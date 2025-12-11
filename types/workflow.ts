@@ -5,12 +5,21 @@ export enum ItemStatus {
   COMPLETED = "completed",
 }
 
+export interface ItemUpdate {
+  id: string;
+  content: string;
+  createdAt: string;
+  createdBy: string;
+  createdByName: string;
+}
+
 export interface Item {
   id: string;
   description: string;
   order: number;
   status: ItemStatus;
   expectClosingDate?: string;
+  updates?: ItemUpdate[];
 }
 
 export interface Checklist {

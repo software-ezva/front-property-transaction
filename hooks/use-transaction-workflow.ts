@@ -88,11 +88,147 @@ export function useTransactionWorkflow(transactionId: string) {
     }
   };
 
+  // Handler for adding a new checklist
+  const handleAddChecklist = async (name: string) => {
+    if (!transactionId) return;
+
+    try {
+      // We need to import Checklist type if not already imported, or use any for now if it's complex
+      // But looking at the file, Checklist is not imported. I should check imports.
+      // Actually, I'll just use the endpoint and assume it returns the new checklist.
+      // I need to update the state.
+
+      const response = await apiClient.post<any>(
+        `${ENDPOINTS.internal.TRANSACTIONS}/${transactionId}/workflow/checklists`,
+        { name }
+      );
+
+      // Update local state
+      if (workflow) {
+        // Assuming response is the new checklist object
+        // Ensure items is initialized to empty array if missing
+        const newChecklist = { ...response, items: response.items || [] };
+        const updatedWorkflow: Workflow = {
+          ...workflow,
+          checklists: [...workflow.checklists, newChecklist],
+        };
+        setWorkflow(updatedWorkflow);
+      }
+
+      toast({
+        title: "Checklist added",
+        description: "New checklist has been added to the workflow.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error adding checklist:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add checklist.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handler for adding a new item to a checklist
+  const handleAddItem = async (checklistId: string, description: string) => {
+    if (!transactionId) return;
+
+    try {
+      const response = await apiClient.post<Item>(
+        `${ENDPOINTS.internal.TRANSACTIONS}/${transactionId}/workflow/checklists/${checklistId}/items`,
+        { description }
+      );
+
+      // Update local state
+      if (workflow) {
+        const updatedWorkflow: Workflow = {
+          ...workflow,
+          checklists: workflow.checklists.map((checklist) => {
+            if (checklist.id === checklistId) {
+              return {
+                ...checklist,
+                items: [...(checklist.items || []), response],
+              };
+            }
+            return checklist;
+          }),
+        };
+        setWorkflow(updatedWorkflow);
+      }
+
+      toast({
+        title: "Item added",
+        description: "New item has been added to the checklist.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error adding item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add item.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handler for adding an update to an item
+  const handleAddItemUpdate = async (
+    itemId: string,
+    content: string,
+    userName: string
+  ) => {
+    if (!transactionId) return;
+
+    try {
+      const response = await apiClient.post<any>(
+        `${ENDPOINTS.internal.TRANSACTIONS}/items/${itemId}/updates`,
+        { content, userName }
+      );
+
+      // Update local state
+      if (workflow) {
+        const updatedWorkflow: Workflow = {
+          ...workflow,
+          checklists: workflow.checklists.map((checklist) => ({
+            ...checklist,
+            items: checklist.items.map((item) => {
+              if (item.id === itemId) {
+                return {
+                  ...item,
+                  updates: [response, ...(item.updates || [])],
+                };
+              }
+              return item;
+            }),
+          })),
+        };
+        setWorkflow(updatedWorkflow);
+      }
+
+      toast({
+        title: "Update added",
+        description: "Your update has been posted successfully.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error adding update:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add update.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     workflow,
     workflowLoading,
     workflowError,
     fetchWorkflow,
     handleUpdateItem,
+    handleAddChecklist,
+    handleAddItem,
+    handleAddItemUpdate,
   };
 }
