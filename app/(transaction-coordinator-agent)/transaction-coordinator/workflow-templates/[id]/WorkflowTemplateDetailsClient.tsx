@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Edit,
@@ -8,6 +9,7 @@ import {
   Trash2,
   ChevronDown,
   ChevronRight,
+  FileX,
 } from "lucide-react";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
@@ -18,9 +20,13 @@ import {
 } from "@/types/workflow-templates";
 import ReturnTo from "@/components/molecules/ReturnTo";
 import PageTitle from "@/components/molecules/PageTitle";
-import { useAgentAuth } from "@/hooks/use-agent-auth";
+import { useTransactionCoordinatorAgentAuth } from "@/hooks/use-transaction-coordinator-agent-auth";
 import { useWorkflowTemplate } from "@/hooks/use-workflow-templates";
+import { deleteTemplate } from "@/lib/api/workflow-templates";
 import { ENDPOINTS } from "@/lib/constants";
+import ConfirmationDialog from "@/components/molecules/ConfirmationDialog";
+import LoadingState from "@/components/molecules/LoadingState";
+import EmptyState from "@/components/molecules/EmptyState";
 
 export interface WorkflowTemplateDetailsClientProps {
   templateId: string;
@@ -29,18 +35,21 @@ export interface WorkflowTemplateDetailsClientProps {
 export default function WorkflowTemplateDetailsClient({
   templateId,
 }: WorkflowTemplateDetailsClientProps) {
-  const { user, isLoading, error: authError } = useAgentAuth();
+  const router = useRouter();
+  const {
+    user,
+    isLoading,
+    error: authError,
+  } = useTransactionCoordinatorAgentAuth();
   const {
     template,
     loading: loadingTemplate,
     error,
   } = useWorkflowTemplate(templateId);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (authError) return <div>Error loading user data</div>;
-  if (!user) return <div>Please log in</div>;
-
   const [expandedChecklists, setExpandedChecklists] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Initialize expanded checklists when template loads
   useEffect(() => {
@@ -49,45 +58,38 @@ export default function WorkflowTemplateDetailsClient({
     }
   }, [template]);
 
-  // Loading state for template data
-  if (loadingTemplate) {
-    return (
-      <div className="max-w-6xl mx-auto py-20 text-center text-muted-foreground">
-        <div className="animate-pulse">Loading template...</div>
-      </div>
-    );
+  if (isLoading || loadingTemplate) {
+    return <LoadingState title="Loading template details..." />;
   }
+
+  if (authError) return <div>Error loading user data</div>;
+  if (!user) return <div>Please log in</div>;
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto py-20 text-center text-muted-foreground">
-        <h2 className="text-2xl font-semibold mb-2">Error</h2>
-        <p className="mb-4">{error}</p>
-        <Link href="/agent/workflow-templates">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Templates
-          </Button>
-        </Link>
-      </div>
+      <EmptyState
+        title="Error"
+        description={error}
+        icon={FileX}
+        actionLabel="Back to Templates"
+        onAction={() =>
+          router.push("/transaction-coordinator/workflow-templates")
+        }
+      />
     );
   }
 
   if (!template) {
     return (
-      <div className="max-w-6xl mx-auto py-20 text-center text-muted-foreground">
-        <h2 className="text-2xl font-semibold mb-2">No data available</h2>
-        <p className="mb-4">
-          No workflow template details could be loaded. Please check the
-          template ID or try again later.
-        </p>
-        <Link href="/agent/workflow-templates">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Templates
-          </Button>
-        </Link>
-      </div>
+      <EmptyState
+        title="No data available"
+        description="No workflow template details could be loaded. Please check the template ID or try again later."
+        icon={FileX}
+        actionLabel="Back to Templates"
+        onAction={() =>
+          router.push("/transaction-coordinator/workflow-templates")
+        }
+      />
     );
   }
   // checklistTemplates fallback: if missing, treat as empty array
@@ -104,18 +106,30 @@ export default function WorkflowTemplateDetailsClient({
   };
 
   const handleEdit = () => {
-    window.location.href = `/agent/workflow-templates/${templateId}/edit`;
+    router.push(
+      `/transaction-coordinator/workflow-templates/${templateId}/edit`
+    );
   };
 
   const handleDuplicate = () => {
-    // Lógica para duplicar template
-    console.log("Duplicate template:", templateId);
+    router.push(
+      `/transaction-coordinator/workflow-templates/create?duplicateId=${templateId}`
+    );
   };
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this workflow template?")) {
-      console.log("Delete template:", templateId);
-      window.location.href = "/agent/workflow-templates";
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteTemplate(templateId);
+      router.push("/transaction-coordinator/workflow-templates");
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      alert("Failed to delete template");
+      setIsDeleting(false);
     }
   };
 
@@ -133,7 +147,7 @@ export default function WorkflowTemplateDetailsClient({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className=" space-x-4">
           <ReturnTo
-            href="/agent/workflow-templates"
+            href="/transaction-coordinator/workflow-templates"
             label="Back to Templates"
           />
           <PageTitle
@@ -296,6 +310,17 @@ export default function WorkflowTemplateDetailsClient({
           </div>
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Template"
+        message="Are you sure you want to delete this workflow template? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

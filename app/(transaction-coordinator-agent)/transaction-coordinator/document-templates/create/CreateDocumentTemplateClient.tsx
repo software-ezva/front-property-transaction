@@ -109,7 +109,7 @@ export default function CreateDocumentTemplateClient() {
       });
 
       // Redirigir a la lista de templates sin abrir automáticamente los detalles
-      router.push("/agent/document-templates");
+      router.push("/transaction-coordinator/document-templates");
     } catch (error) {
       console.error("Error creating template:", error);
       // El error se mostrará automáticamente por el sistema de notificaciones
@@ -136,7 +136,9 @@ export default function CreateDocumentTemplateClient() {
       <div className="flex items-center space-x-4">
         <Button
           variant="ghost"
-          onClick={() => router.push("/agent/document-templates")}
+          onClick={() =>
+            router.push("/transaction-coordinator/document-templates")
+          }
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Templates
@@ -291,7 +293,9 @@ export default function CreateDocumentTemplateClient() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/agent/document-templates")}
+              onClick={() =>
+                router.push("/transaction-coordinator/document-templates")
+              }
               disabled={isSubmitting}
             >
               Cancel

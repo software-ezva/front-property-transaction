@@ -10,7 +10,6 @@ import {
   Settings,
 } from "lucide-react";
 import NavigationItem from "../molecules/NavigationItem";
-import { hr } from "date-fns/locale";
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -18,27 +17,39 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isCollapsed, profile }: SidebarProps) => {
-  const agentNavigation = [
-    { href: "/agent/dashboard", icon: Home, label: "Dashboard" },
-    { href: "/agent/properties", icon: Building2, label: "Properties" },
+  const transactionCoordinatorAgentNavigation = [
     {
-      href: "/agent/transactions",
+      href: "/transaction-coordinator/dashboard",
+      icon: Home,
+      label: "Dashboard",
+    },
+    {
+      href: "/transaction-coordinator/properties",
+      icon: Building2,
+      label: "Properties",
+    },
+    {
+      href: "/transaction-coordinator/transactions",
       icon: BriefcaseBusiness,
       label: "Transactions",
     },
     {
-      href: "/agent/workflow-templates",
+      href: "/transaction-coordinator/workflow-templates",
       icon: Workflow,
       label: "Workflow Templates",
     },
-    { href: "/agent/document-templates", icon: FileText, label: "Documents" },
-    { href: "/agent/clients", icon: Users, label: "Clients" },
+    {
+      href: "/transaction-coordinator/document-templates",
+      icon: FileText,
+      label: "Documents",
+    },
+    //{ href: "/transaction-coordinator/clients", icon: Users, label: "Clients" },
   ];
 
   const clientNavigation = [
-    { href: "/client/dashboard", icon: Home, label: "Dashboard" },
+    //{ href: "/client/dashboard", icon: Home, label: "Dashboard" },
     { href: "/client/transactions", icon: FileText, label: "My Transactions" },
-    { href: "/client/agents", icon: Users, label: "My Agents" },
+    //{ href: "/client/agents", icon: Users, label: "My Agents" },
   ];
 
   const brokerNavigation = [
@@ -62,12 +73,24 @@ const Sidebar = ({ isCollapsed, profile }: SidebarProps) => {
       label: "Transactions",
     },
   ];
+  const realEstateAgentNavigation = [
+    //{ href: "/real-estate-agent/dashboard", icon: Home, label: "Dashboard" },
+    {
+      href: "/real-estate-agent/transactions",
+      icon: BriefcaseBusiness,
+      label: "My Transactions",
+    },
+  ];
 
-  const navigationConfig: Record<string, typeof agentNavigation> = {
-    "real estate agent": agentNavigation,
+  const navigationConfig: Record<
+    string,
+    typeof transactionCoordinatorAgentNavigation
+  > = {
+    "transaction coordinator agent": transactionCoordinatorAgentNavigation,
     client: clientNavigation,
     broker: brokerNavigation,
     "supporting professional": supportingProfessionalNavigation,
+    "real estate agent": realEstateAgentNavigation,
   };
 
   const navigation = navigationConfig[profile] || clientNavigation;

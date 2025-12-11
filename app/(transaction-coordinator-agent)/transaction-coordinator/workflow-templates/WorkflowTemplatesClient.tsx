@@ -1,15 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  Copy,
-  FileText,
-  Settings,
-} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Plus, FileText } from "lucide-react";
 import Button from "@/components/atoms/Button";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -17,6 +10,8 @@ import { TransactionType } from "@/types/workflow-templates";
 import TemplateCard from "@/components/molecules/TemplateCard";
 import { useWorkflowTemplates } from "@/hooks/use-workflow-templates";
 import PageTitle from "@/components/molecules/PageTitle";
+import ConfirmationDialog from "@/components/molecules/ConfirmationDialog";
+import EmptyState from "@/components/molecules/EmptyState";
 
 type Template = {
   id: string;
@@ -32,9 +27,13 @@ export default function WorkflowTemplatesClient() {
     error,
     deleteTemplate,
   } = useWorkflowTemplates();
+  const router = useRouter();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredTemplates = templates.filter(
     (t) =>
@@ -43,22 +42,31 @@ export default function WorkflowTemplatesClient() {
   );
 
   const handleEdit = (id: string) => {
-    // Usar Link en TemplateCard, no navegación directa aquí
-    // window.location.href = `/agent/workflow-templates/${id}/edit`;
+    router.push(`/transaction-coordinator/workflow-templates/${id}/edit`);
   };
 
   const handleDuplicate = async (template: Template) => {
-    // TODO: Implement duplicate functionality with API call
-    console.log("Duplicate template:", template.id);
-    alert("Duplicate functionality will be implemented soon");
+    router.push(
+      `/transaction-coordinator/workflow-templates/create?duplicateId=${template.id}`
+    );
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this workflow template?")) {
+  const handleDelete = (id: string) => {
+    setTemplateToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (templateToDelete) {
+      setIsDeleting(true);
       try {
-        await deleteTemplate(id);
+        await deleteTemplate(templateToDelete);
+        setDeleteDialogOpen(false);
+        setTemplateToDelete(null);
       } catch (error) {
         console.error("Error deleting template:", error);
+      } finally {
+        setIsDeleting(false);
       }
     }
   };
@@ -88,8 +96,8 @@ export default function WorkflowTemplatesClient() {
             subtitle="Manage workflow templates for different transaction types"
           />
         </div>
-        <Link href="/agent/workflow-templates/create" passHref legacyBehavior>
-          <Button asChild className="sm:w-auto">
+        <Link href="/transaction-coordinator/workflow-templates/create">
+          <Button className="sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
             Create Template
           </Button>
@@ -143,38 +151,38 @@ export default function WorkflowTemplatesClient() {
                 key={template.id}
                 template={template}
                 getTransactionTypeLabel={getTransactionTypeLabel}
-                onEdit={handleEdit}
                 onDuplicate={handleDuplicate}
                 onDelete={handleDelete}
               />
             ))}
           </div>
         ) : (
-          <div className="bg-card rounded-lg p-12 border border-border text-center">
-            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No templates found
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm || typeFilter !== "all"
+          <EmptyState
+            title="No templates found"
+            description={
+              searchTerm || typeFilter !== "all"
                 ? "No templates match your current filters."
-                : "Create your first workflow template to get started."}
-            </p>
-            <Link
-              href="/agent/workflow-templates/create"
-              passHref
-              legacyBehavior
-            >
-              <Button asChild>
-                <a>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Template
-                </a>
-              </Button>
-            </Link>
-          </div>
+                : "Create your first workflow template to get started."
+            }
+            icon={FileText}
+            actionLabel="Create Template"
+            onAction={() =>
+              router.push("/transaction-coordinator/workflow-templates/create")
+            }
+          />
         )}
       </div>
+
+      <ConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Template"
+        message="Are you sure you want to delete this workflow template? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

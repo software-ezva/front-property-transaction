@@ -36,8 +36,9 @@ import {
   type ChecklistItem,
 } from "@/types/workflow-templates";
 
-import { apiClient } from "@/lib/api-internal";
-import { ENDPOINTS } from "@/lib/constants";
+import { useWorkflowTemplate } from "@/hooks/use-workflow-templates";
+import LoadingState from "@/components/molecules/LoadingState";
+import EmptyState from "@/components/molecules/EmptyState";
 
 interface FormData {
   name: string;
@@ -51,31 +52,16 @@ interface FormErrors {
   checklists?: string;
 }
 
-// Fetch template data by id from API
-const fetchTemplate = async (id: string): Promise<FormData> => {
-  const data = (await apiClient.get(
-    `${ENDPOINTS.internal.TEMPLATES}/get?id=${id}`
-  )) as any;
-  return {
-    name: data.name || "",
-    transactionType: data.transactionType || "",
-    checklists: Array.isArray(data.checklistTemplates)
-      ? data.checklistTemplates.map((c: any) => ({
-          ...c,
-          items: Array.isArray(c.items) ? c.items : [],
-        }))
-      : [],
-  };
-};
-
 type EditWorkflowTemplateClientProps = {
-  templateId?: string;
+  templateId: string;
 };
 
 export default function EditWorkflowTemplateClient({
   templateId,
 }: EditWorkflowTemplateClientProps) {
   const router = useRouter();
+  const { template, loading, error, updateTemplate } =
+    useWorkflowTemplate(templateId);
 
   const sensors = useSensors(useSensor(PointerSensor));
   const checklistSensors = useSensors(useSensor(PointerSensor));
@@ -89,54 +75,41 @@ export default function EditWorkflowTemplateClient({
   const [expandedChecklists, setExpandedChecklists] = useState<Set<string>>(
     new Set()
   );
-  const [loadingTemplate, setLoadingTemplate] = useState(true);
 
   useEffect(() => {
-    if (!templateId) return;
-    const fetchData = async () => {
-      try {
-        const data = await fetchTemplate(templateId);
-        setFormData(data);
-        setExpandedChecklists(new Set(data.checklists.map((c) => c.id)));
-      } catch (err) {
-        setFormData({ name: "", transactionType: "", checklists: [] });
-        setExpandedChecklists(new Set());
-      } finally {
-        setLoadingTemplate(false);
-      }
-    };
-    fetchData();
-  }, [templateId]);
+    if (template) {
+      const data: FormData = {
+        name: template.name || "",
+        transactionType: (template.transactionType as TransactionType) || "",
+        checklists: Array.isArray(template.checklistTemplates)
+          ? template.checklistTemplates.map((c: any) => ({
+              ...c,
+              items: Array.isArray(c.items) ? c.items : [],
+            }))
+          : [],
+      };
+      setFormData(data);
+      setExpandedChecklists(new Set(data.checklists.map((c) => c.id)));
+    }
+  }, [template]);
 
-  if (!templateId) {
-    return (
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="text-center py-20">
-          <h2 className="text-2xl font-semibold mb-2">Template ID required</h2>
-          <p className="text-muted-foreground mb-4">
-            No template ID provided for editing.
-          </p>
-          <Link href="/agent/workflow-templates">
-            <Button variant="outline">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Templates
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
+  if (loading) {
+    return <LoadingState title="Loading template..." />;
   }
 
-  if (loadingTemplate) {
+  if (error) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="text-center py-20">
-          <div className="animate-pulse">Loading template...</div>
-        </div>
-      </div>
+      <EmptyState
+        title="Error"
+        description={error}
+        icon={AlertCircle}
+        actionLabel="Back to Templates"
+        onAction={() =>
+          router.push("/transaction-coordinator/workflow-templates")
+        }
+      />
     );
   }
-
   // Funciones helper necesarias
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,13 +175,14 @@ export default function EditWorkflowTemplateClient({
       };
 
       // El apiClient automáticamente manejará los errores via useErrorNotification
-      await apiClient.patch(`${ENDPOINTS.internal.TEMPLATES}`, {
-        id: templateId,
-        ...updateData,
+      await updateTemplate({
+        name: formData.name,
+        transactionType: formData.transactionType as TransactionType,
+        checklistTemplates: formData.checklists,
       });
 
       // Si llegamos aquí, fue exitoso - redirigir a detalles
-      router.push(`/agent/workflow-templates/${templateId}`);
+      router.push(`/transaction-coordinator/workflow-templates/${templateId}`);
     } catch (error) {
       // Los errores ya se manejan automáticamente por el sistema de notificaciones
       console.error("Error updating template:", error);
@@ -322,7 +296,11 @@ export default function EditWorkflowTemplateClient({
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <Link href="/agent/workflow-templates" passHref legacyBehavior>
+        <Link
+          href="/transaction-coordinator/workflow-templates"
+          passHref
+          legacyBehavior
+        >
           <Button asChild variant="ghost" size="sm">
             <a className="flex items-center">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -474,7 +452,11 @@ export default function EditWorkflowTemplateClient({
 
         {/* Actions */}
         <div className="flex items-center justify-end space-x-4 pt-6">
-          <Link href="/agent/workflow-templates" passHref legacyBehavior>
+          <Link
+            href="/transaction-coordinator/workflow-templates"
+            passHref
+            legacyBehavior
+          >
             <Button
               asChild
               type="button"

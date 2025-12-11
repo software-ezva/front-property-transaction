@@ -2,20 +2,20 @@
 
 import { BarChart3, Building2, Users, Calendar } from "lucide-react";
 import Button from "@/components/atoms/Button";
-import { useAgentAuth } from "@/hooks/use-agent-auth";
+import { useTransactionCoordinatorAgentAuth } from "@/hooks/use-transaction-coordinator-agent-auth";
 import Link from "next/link";
 import PageTitle from "@/components/molecules/PageTitle";
 import UpcomingTasks from "@/components/organisms/UpcomingTasks";
+import LoadingState from "@/components/molecules/LoadingState";
 
 export default function AgentDashboard() {
-  const { agentUser, agentProfile } = useAgentAuth();
-
-  // Si llegamos aquí, ya sabemos que la autenticación fue exitosa gracias al layout
-  // agentUser y agentProfile no serán null
+  const {
+    transactionCoordinatorAgentUser: agentUser,
+    transactionCoordinatorAgentProfile: agentProfile,
+  } = useTransactionCoordinatorAgentAuth();
 
   if (!agentUser || !agentProfile) {
-    // Esto no debería pasar si el layout funciona correctamente
-    return <div>Loading user data...</div>;
+    return <LoadingState title="Loading user data..." />;
   }
 
   return (
@@ -30,11 +30,10 @@ export default function AgentDashboard() {
           <span className="bg-primary/20 text-primary px-3 py-1 rounded-full">
             License: {agentUser.profile.license_number}
           </span>
-          {/* Si tienes más datos, agrégalos aquí */}
         </div>
       </div>
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
           <Building2 className="w-12 h-12 text-primary mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -54,14 +53,14 @@ export default function AgentDashboard() {
           <p className="text-muted-foreground text-sm mb-4">
             Add a new transaction
           </p>
-          <Link href="/agent/transactions/create">
+          <Link href="/transaction-coordinator/transactions/create">
             <Button variant="secondary" className="w-full">
               Add Transaction
             </Button>
           </Link>
         </div>
 
-        <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
+        {/* <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
           <Users className="w-12 h-12 text-secondary mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">
             New Client
@@ -85,7 +84,7 @@ export default function AgentDashboard() {
           <Button variant="outline" className="w-full">
             Schedule
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Agent Stats Section */}

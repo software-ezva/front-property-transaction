@@ -2,14 +2,14 @@
 
 import { useUser } from "@auth0/nextjs-auth0";
 
-interface AgentProfile {
+interface TransactionCoordinatorAgentProfile {
   esignName: string;
   esignInitials: string;
   licenseNumber: string;
   profileType: string;
 }
 
-interface AgentUser {
+interface TransactionCoordinatorAgentUser {
   id: string;
   name: string;
   email: string;
@@ -21,30 +21,30 @@ interface AgentUser {
   };
 }
 
-interface AgentUserForHeader {
+interface TransactionCoordinatorAgentUserForHeader {
   name: string;
   profile: string;
   avatar: string;
 }
 
-interface UseAgentAuthReturn {
+interface UseTransactionCoordinatorAgentAuthReturn {
   user: any;
-  agentProfile: AgentProfile | null;
-  agentUser: AgentUser | null;
-  agentUserForHeader: AgentUserForHeader | null;
+  transactionCoordinatorAgentProfile: TransactionCoordinatorAgentProfile | null;
+  transactionCoordinatorAgentUser: TransactionCoordinatorAgentUser | null;
+  transactionCoordinatorAgentUserForHeader: TransactionCoordinatorAgentUserForHeader | null;
   isLoading: boolean;
   error: string | null;
 }
 
-export function useAgentAuth(): UseAgentAuthReturn {
+export function useTransactionCoordinatorAgentAuth(): UseTransactionCoordinatorAgentAuthReturn {
   const { user, isLoading } = useUser();
 
   if (isLoading) {
     return {
       user: null,
-      agentProfile: null,
-      agentUser: null,
-      agentUserForHeader: null,
+      transactionCoordinatorAgentProfile: null,
+      transactionCoordinatorAgentUser: null,
+      transactionCoordinatorAgentUserForHeader: null,
       isLoading: true,
       error: null,
     };
@@ -53,9 +53,9 @@ export function useAgentAuth(): UseAgentAuthReturn {
   if (!user) {
     return {
       user: null,
-      agentProfile: null,
-      agentUser: null,
-      agentUserForHeader: null,
+      transactionCoordinatorAgentProfile: null,
+      transactionCoordinatorAgentUser: null,
+      transactionCoordinatorAgentUserForHeader: null,
       isLoading: false,
       error: "No user session found.",
     };
@@ -64,19 +64,19 @@ export function useAgentAuth(): UseAgentAuthReturn {
   if (!user.profile) {
     return {
       user,
-      agentProfile: null,
-      agentUser: null,
-      agentUserForHeader: null,
+      transactionCoordinatorAgentProfile: null,
+      transactionCoordinatorAgentUser: null,
+      transactionCoordinatorAgentUserForHeader: null,
       isLoading: false,
       error: "No agent profile found.",
     };
   }
 
   // El perfil guardado en la sesión
-  const agentProfile = user.profile as AgentProfile;
+  const agentProfile = user.profile as TransactionCoordinatorAgentProfile;
 
   // Crear el agentUser completo
-  const agentUser: AgentUser = {
+  const agentUser: TransactionCoordinatorAgentUser = {
     id: user.sub || user.id || "",
     name: user.first_name + " " + user.last_name || user.name || "Agent",
     email: user.email || "",
@@ -89,7 +89,7 @@ export function useAgentAuth(): UseAgentAuthReturn {
   };
 
   // Crear el usuario para el header
-  const agentUserForHeader: AgentUserForHeader = {
+  const agentUserForHeader: TransactionCoordinatorAgentUserForHeader = {
     name: String(user.first_name + " " + user.last_name || user.name || ""),
     profile: String(agentProfile.profileType?.replace(/_/g, " ") || ""),
     avatar: String(user.picture || ""),
@@ -97,9 +97,9 @@ export function useAgentAuth(): UseAgentAuthReturn {
 
   return {
     user,
-    agentProfile,
-    agentUser,
-    agentUserForHeader,
+    transactionCoordinatorAgentProfile: agentProfile,
+    transactionCoordinatorAgentUser: agentUser,
+    transactionCoordinatorAgentUserForHeader: agentUserForHeader,
     isLoading: false,
     error: null,
   };

@@ -1,8 +1,8 @@
 "use client";
 import { SortableChecklist } from "@/components/organisms/SortableChecklist";
 import type React from "react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   DndContext,
   closestCenter,
@@ -44,7 +44,10 @@ import {
   type ChecklistItem,
 } from "@/types/workflow-templates";
 import { SortableItem } from "../../../../../components/organisms/SortableItem";
-import { useWorkflowTemplates } from "@/hooks/use-workflow-templates";
+import {
+  useWorkflowTemplates,
+  useWorkflowTemplate,
+} from "@/hooks/use-workflow-templates";
 import { ENDPOINTS } from "@/lib/constants";
 
 interface FormData {
@@ -61,7 +64,10 @@ interface FormErrors {
 
 function CreateWorkflowTemplateClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const duplicateId = searchParams.get("duplicateId");
   const { createTemplate } = useWorkflowTemplates();
+  const { template: sourceTemplate } = useWorkflowTemplate(duplicateId || "");
 
   // Only call hooks at the top level, not inside loops or conditionals
   const sensors = useSensors(useSensor(PointerSensor));
@@ -77,6 +83,30 @@ function CreateWorkflowTemplateClient() {
   const [expandedChecklists, setExpandedChecklists] = useState<Set<string>>(
     new Set()
   );
+
+  useEffect(() => {
+    if (sourceTemplate && duplicateId) {
+      const timestamp = Date.now();
+      const newChecklists = sourceTemplate.checklistTemplates.map(
+        (ct, index) => ({
+          ...ct,
+          id: `dup-list-${timestamp}-${index}`,
+          items: ct.items.map((item, iIndex) => ({
+            ...item,
+            id: `dup-item-${timestamp}-${index}-${iIndex}`,
+          })),
+        })
+      );
+
+      setFormData({
+        name: `Copy of ${sourceTemplate.name}`,
+        transactionType: sourceTemplate.transactionType,
+        checklists: newChecklists,
+      });
+
+      setExpandedChecklists(new Set(newChecklists.map((c) => c.id)));
+    }
+  }, [sourceTemplate, duplicateId]);
 
   // Funciones helper necesarias
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,7 +152,7 @@ function CreateWorkflowTemplateClient() {
       await createTemplate(createData);
 
       // If we get here, it was successful - redirect to template list
-      router.push("/agent/workflow-templates");
+      router.push("/transaction-coordinator/workflow-templates");
     } catch (error) {
       // Errors are already handled automatically by the notification system
       console.error("Error creating template:", error);
@@ -385,7 +415,7 @@ function CreateWorkflowTemplateClient() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => window.history.back()}
+            onClick={() => router.back()}
             disabled={isSubmitting}
           >
             Cancel

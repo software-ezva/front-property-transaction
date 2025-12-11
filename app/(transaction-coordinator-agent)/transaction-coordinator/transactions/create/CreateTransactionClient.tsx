@@ -8,7 +8,7 @@ import Input from "@/components/atoms/Input";
 import Button from "@/components/atoms/Button";
 import Link from "next/link";
 
-import { useAgentAuth } from "@/hooks/use-agent-auth";
+import { useTransactionCoordinatorAgentAuth } from "@/hooks/use-transaction-coordinator-agent-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import PageTitle from "@/components/molecules/PageTitle";
 import ReturnTo from "@/components/molecules/ReturnTo";
@@ -27,11 +27,8 @@ export default function CreateTransactionClient() {
   // State hooks (only one declaration each, in logical order)
   const [properties, setProperties] = useState<any[]>([]);
   const [loadingProperties, setLoadingProperties] = useState(true);
-  const [clients, setClients] = useState<SimpleUserResponseDto[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
   const [formData, setFormData] = useState<TransactionFormData>({
     propertyId: "",
-    clientId: "",
     notes: "",
     transactionType: "Purchase",
   });
@@ -65,7 +62,10 @@ export default function CreateTransactionClient() {
     }
   }, [formData.transactionType, templates]);
 
-  const { agentUser, agentProfile } = useAgentAuth();
+  const {
+    transactionCoordinatorAgentUser: agentUser,
+    transactionCoordinatorAgentProfile: agentProfile,
+  } = useTransactionCoordinatorAgentAuth();
 
   // If we reach here, authentication was successful thanks to the layout
   if (!agentUser || !agentProfile) {
@@ -87,24 +87,8 @@ export default function CreateTransactionClient() {
     fetchProperties();
   }, []);
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const data = await apiClient.get(ENDPOINTS.internal.CLIENT_PROFILE);
-        setClients(data);
-      } catch (error) {
-        // Error is automatically shown as toast
-        console.error("Error loading clients:", error);
-      } finally {
-        setLoadingClients(false);
-      }
-    };
-    fetchClients();
-  }, []);
-
   interface TransactionFormData {
     propertyId: string;
-    clientId: string;
     notes: string;
     transactionType: string;
   }
@@ -112,7 +96,6 @@ export default function CreateTransactionClient() {
   const selectedProperty = properties.find(
     (p) => String(p.id) === formData.propertyId
   );
-  const selectedClient = clients.find((c) => c.id === formData.clientId);
 
   const validateForm = (): boolean => {
     if (!formData.propertyId) {
@@ -132,12 +115,13 @@ export default function CreateTransactionClient() {
       const payload = {
         propertyId: formData.propertyId,
         workflowTemplateId: selectedTemplateId,
-        clientId: formData.clientId || undefined,
         additionalNotes: formData.notes || undefined,
       };
 
       const result = await createTransaction(payload);
-      router.push(`/agent/transactions/${result.transactionId}`);
+      router.push(
+        `/transaction-coordinator/transactions/${result.transactionId}`
+      );
     } catch (error) {
       // Error is automatically shown as toast
       console.error("Error creating transaction:", error);
@@ -170,7 +154,10 @@ export default function CreateTransactionClient() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="items-center space-x-4 space-y-5">
-        <ReturnTo href="/agent/transactions" label="Back to Transactions" />
+        <ReturnTo
+          href="/transaction-coordinator/transactions"
+          label="Back to Transactions"
+        />
         <div>
           <PageTitle
             title="Create New Transaction"
@@ -264,31 +251,6 @@ export default function CreateTransactionClient() {
               </select>
             </div>
 
-            {/* Client Selection */}
-            <div>
-              <label className="text-sm font-medium text-foreground block mb-2">
-                Client <span className="text-muted-foreground">(Optional)</span>
-              </label>
-              <select
-                value={formData.clientId}
-                onChange={(e) => handleInputChange("clientId", e.target.value)}
-                className="w-full px-3 py-2 border border-input rounded-md bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                disabled={loadingClients}
-              >
-                <option value="">
-                  {loadingClients ? "Loading..." : "No client assigned"}
-                </option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.firstName} {client.lastName} - {client.email}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground mt-1">
-                You can assign a client later if needed
-              </p>
-            </div>
-
             {/* Notes */}
             <div>
               <label className="text-sm font-medium text-foreground block mb-2">
@@ -305,7 +267,10 @@ export default function CreateTransactionClient() {
 
             {/* Submit Button */}
             <div className="flex space-x-3 pt-4">
-              <Link href="/agent/transactions" className="flex-1">
+              <Link
+                href="/transaction-coordinator/transactions"
+                className="flex-1"
+              >
                 <Button
                   type="button"
                   variant="outline"
@@ -379,28 +344,6 @@ export default function CreateTransactionClient() {
             </div>
           )}
 
-          {/* Client Preview */}
-          {selectedClient && (
-            <div className="bg-card rounded-lg p-6 border border-border">
-              <div className="flex items-center space-x-2 mb-4">
-                <User className="w-5 h-5 text-secondary" />
-                <h3 className="font-semibold text-foreground">
-                  Selected Client
-                </h3>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <h4 className="font-medium text-foreground">
-                    {selectedClient.firstName} {selectedClient.lastName}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedClient.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Transaction Summary */}
           <div className="bg-card rounded-lg p-6 border border-border">
             <div className="flex items-center space-x-2 mb-4">
@@ -419,12 +362,6 @@ export default function CreateTransactionClient() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Agent:</span>
                 <span className="font-medium">{agentUser.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Client:</span>
-                <span className="font-medium">
-                  {selectedClient?.firstName} {selectedClient?.lastName}
-                </span>
               </div>
             </div>
           </div>

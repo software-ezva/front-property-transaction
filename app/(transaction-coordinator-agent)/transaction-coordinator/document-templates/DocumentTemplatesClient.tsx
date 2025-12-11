@@ -153,7 +153,8 @@ export default function DocumentTemplatesClient() {
         </div>
         <Button
           onClick={() =>
-            (window.location.href = "/agent/document-templates/create")
+            (window.location.href =
+              "/transaction-coordinator/document-templates/create")
           }
           className="sm:w-auto"
         >
@@ -299,7 +300,8 @@ export default function DocumentTemplatesClient() {
             icon={FileText}
             actionLabel="Add Template"
             onAction={() =>
-              (window.location.href = "/agent/document-templates/create")
+              (window.location.href =
+                "/transaction-coordinator/document-templates/create")
             }
           />
         )}
