@@ -1,12 +1,19 @@
 "use client";
 
-import { Calendar, Clock, ArrowRight, RefreshCw } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  ArrowRight,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
 import Link from "next/link";
 import { ItemStatus } from "@/types/workflow";
 import Input from "@/components/atoms/Input";
 import LoadingState from "@/components/molecules/LoadingState";
+import ErrorState from "@/components/molecules/ErrorState";
 import { useUpcomingTasks } from "@/hooks/use-upcoming-tasks";
 
 export default function UpcomingTasks() {
@@ -143,17 +150,14 @@ export default function UpcomingTasks() {
         {isLoading ? (
           <LoadingState title="Loading tasks..." />
         ) : error ? (
-          <div className="text-center py-8 text-destructive">
-            <p>{error}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refresh}
-              className="mt-2"
-            >
-              Try Again
-            </Button>
-          </div>
+          <ErrorState
+            title="Error Loading Tasks"
+            error={error}
+            onRetry={refresh}
+            icon={AlertTriangle}
+            size="sm"
+            className="border-0 shadow-none p-0"
+          />
         ) : sortedTasks.length > 0 ? (
           <div className="space-y-2">
             {sortedTasks.slice(0, 10).map((task, index) => {

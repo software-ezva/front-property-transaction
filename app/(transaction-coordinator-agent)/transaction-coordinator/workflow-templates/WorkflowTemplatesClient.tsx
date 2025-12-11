@@ -12,6 +12,8 @@ import { useWorkflowTemplates } from "@/hooks/use-workflow-templates";
 import PageTitle from "@/components/molecules/PageTitle";
 import ConfirmationDialog from "@/components/molecules/ConfirmationDialog";
 import EmptyState from "@/components/molecules/EmptyState";
+import ErrorState from "@/components/molecules/ErrorState";
+import { LoadingState } from "@/components/molecules";
 
 type Template = {
   id: string;
@@ -78,14 +80,6 @@ export default function WorkflowTemplatesClient() {
       : "N/A";
   };
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <p className="text-destructive">Error: {error}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -138,12 +132,18 @@ export default function WorkflowTemplatesClient() {
       {/* Templates Grid */}
       <div className="space-y-4">
         {loadingTemplates ? (
-          <div className="bg-card rounded-lg p-12 border border-border text-center">
-            <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Loading templates...
-            </h3>
-          </div>
+          <LoadingState
+            title="Loading templates..."
+            description="Please wait while we load your workflow templates."
+            icon={FileText}
+          />
+        ) : error ? (
+          <ErrorState
+            title="Error Loading Templates"
+            error={error}
+            onRetry={() => window.location.reload()}
+            icon={FileText}
+          />
         ) : filteredTemplates.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredTemplates.map((template) => (

@@ -1,6 +1,7 @@
 import { FileText } from "lucide-react";
 import TransactionCard from "@/components/molecules/TransactionCard";
 import EmptyState from "@/components/molecules/EmptyState";
+import ErrorState from "@/components/molecules/ErrorState";
 import { Transaction } from "@/types/transactions";
 
 interface TransactionListProps {
@@ -27,9 +28,12 @@ export default function TransactionList({
 }: TransactionListProps) {
   if (error) {
     return (
-      <div className="bg-destructive/10 border border-destructive rounded-lg p-4 text-destructive text-center">
-        {error}
-      </div>
+      <ErrorState
+        title="Error Loading Transactions"
+        error={error}
+        onRetry={() => window.location.reload()}
+        icon={FileText}
+      />
     );
   }
 

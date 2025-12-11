@@ -13,6 +13,7 @@ import { useProperties } from "@/hooks/use-properties";
 import ConfirmationDialog from "@/components/molecules/ConfirmationDialog";
 import EmptyState from "@/components/molecules/EmptyState";
 import LoadingState from "@/components/molecules/LoadingState";
+import ErrorState from "@/components/molecules/ErrorState";
 
 export default function AgentPropertiesClient() {
   const router = useRouter();
@@ -77,14 +78,6 @@ export default function AgentPropertiesClient() {
     },
   ];
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <p className="text-destructive">Error: {error}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -124,6 +117,13 @@ export default function AgentPropertiesClient() {
       <div className="space-y-4">
         {loading ? (
           <LoadingState title="Loading properties..." />
+        ) : error ? (
+          <ErrorState
+            title="Error Loading Properties"
+            error={error}
+            onRetry={() => window.location.reload()}
+            icon={MapPin}
+          />
         ) : filteredProperties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProperties.map((property) => (
@@ -178,8 +178,10 @@ export default function AgentPropertiesClient() {
           <EmptyState
             title="No properties found"
             description="No properties match your current search criteria."
-            actionLabel="Clear Filters"
-            onAction={() => setSearchTerm("")}
+            action={{
+              label: "Clear Filters",
+              onClick: () => setSearchTerm(""),
+            }}
             icon={MapPin}
           />
         )}
