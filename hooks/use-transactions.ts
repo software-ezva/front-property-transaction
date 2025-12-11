@@ -124,24 +124,19 @@ export function useTransaction(transactionId: string) {
     try {
       await updateTransaction(transactionId, data);
 
-      // If we're updating clientId, refetch the transaction to get the complete client info
-      if (data.clientId) {
-        await fetchTransaction();
-      } else {
-        // For other updates, optimistically update local state
-        setTransaction((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            status: data.status || prev.status,
-            additionalNotes:
-              data.additionalNotes !== undefined
-                ? data.additionalNotes
-                : prev.additionalNotes,
-            updatedAt: new Date().toISOString(),
-          };
-        });
-      }
+      // Optimistically update local state
+      setTransaction((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          status: data.status || prev.status,
+          additionalNotes:
+            data.additionalNotes !== undefined
+              ? data.additionalNotes
+              : prev.additionalNotes,
+          updatedAt: new Date().toISOString(),
+        };
+      });
     } catch (err) {
       throw err;
     }

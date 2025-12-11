@@ -8,7 +8,7 @@ import { ENDPOINTS } from "@/lib/constants";
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { transactionId, status, clientId, additionalNotes } = body;
+    const { transactionId, status, additionalNotes } = body;
     if (!transactionId) {
       return NextResponse.json(
         { error: "transactionId and status are required" },
@@ -17,13 +17,14 @@ export async function PATCH(req: NextRequest) {
     }
     // Construir el payload solo con los campos presentes
     const payload: PatchTransaction = { status };
-    if (clientId) payload.clientId = clientId;
     if (additionalNotes) payload.additionalNotes = additionalNotes;
+    console.log("Payload for PATCH /api/transactions:", payload);
     // Llamar al backend correcto
     const result = await ApiServerClient.patch(
       `${ENDPOINTS.api.TRANSACTIONS}/${transactionId}`,
       payload
     );
+    console.log("Result from PATCH /api/transactions:", result);
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
@@ -44,10 +45,6 @@ export async function POST(req: NextRequest) {
     propertyId: body.propertyId,
     workflowTemplateId: body.workflowTemplateId,
   };
-
-  if (body.clientId && body.clientId !== "") {
-    payload.clientId = body.clientId;
-  }
 
   if (body.additionalNotes && body.additionalNotes.trim() !== "") {
     payload.additionalNotes = body.additionalNotes;
