@@ -89,10 +89,14 @@ export default function HomePage() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href={ENDPOINTS.auth0.SIGNUP}>
+              <Link
+                href={`${ENDPOINTS.auth0.SIGNUP}&returnTo=/api/auth/login-callback`}
+              >
                 <Button variant="ghost">Sign Up</Button>
               </Link>
-              <Link href={`${ENDPOINTS.auth0.LOGIN}?returnTo=/logging-in`}>
+              <Link
+                href={`${ENDPOINTS.auth0.LOGIN}?returnTo=/api/auth/login-callback`}
+              >
                 <Button>Login</Button>
               </Link>
               <Link href={ENDPOINTS.auth0.LOGOUT}>
@@ -123,7 +127,9 @@ export default function HomePage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/signup/role-selection">
+                <Link
+                  href={`${ENDPOINTS.auth0.SIGNUP}&returnTo=/api/auth/login-callback`}
+                >
                   <Button
                     size="lg"
                     className="text-lg px-8 py-4 w-full sm:w-auto"
@@ -132,13 +138,17 @@ export default function HomePage() {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="text-lg px-8 py-4 w-full sm:w-auto"
+                <Link
+                  href={`${ENDPOINTS.auth0.LOGIN}?returnTo=/api/auth/login-callback`}
                 >
-                  Login
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="text-lg px-8 py-4 w-full sm:w-auto"
+                  >
+                    Login
+                  </Button>
+                </Link>
               </div>
             </div>
 
