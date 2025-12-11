@@ -5,6 +5,7 @@
 // Tipos de perfil válidos
 export const PROFILE_TYPES = {
   CLIENT: "client",
+  TRANSACTION_COORDINATOR_AGENT: "transaction_coordinator_agent",
   REAL_ESTATE_AGENT: "real_estate_agent",
   BROKER: "broker",
   SUPPORTING_PROFESSIONAL: "supporting_professional",
@@ -14,8 +15,10 @@ export type ProfileType = (typeof PROFILE_TYPES)[keyof typeof PROFILE_TYPES];
 
 // Rutas de dashboard por tipo de perfil
 export const DASHBOARD_ROUTES = {
-  [PROFILE_TYPES.CLIENT]: "/client/dashboard",
-  [PROFILE_TYPES.REAL_ESTATE_AGENT]: "/agent/dashboard",
+  [PROFILE_TYPES.CLIENT]: "/client/transactions",
+  [PROFILE_TYPES.TRANSACTION_COORDINATOR_AGENT]:
+    "/transaction-coordinator/dashboard",
+  [PROFILE_TYPES.REAL_ESTATE_AGENT]: "/real-estate-agent/transactions",
   [PROFILE_TYPES.BROKER]: "/broker/dashboard",
   [PROFILE_TYPES.SUPPORTING_PROFESSIONAL]: "/supporting-professional/dashboard",
 } as const;
@@ -23,7 +26,8 @@ export const DASHBOARD_ROUTES = {
 // Rutas base por tipo de perfil (para validaciones de middleware)
 export const BASE_ROUTES = {
   [PROFILE_TYPES.CLIENT]: "/client",
-  [PROFILE_TYPES.REAL_ESTATE_AGENT]: "/agent",
+  [PROFILE_TYPES.TRANSACTION_COORDINATOR_AGENT]: "/transaction-coordinator",
+  [PROFILE_TYPES.REAL_ESTATE_AGENT]: "/real-estate-agent",
   [PROFILE_TYPES.BROKER]: "/broker",
   [PROFILE_TYPES.SUPPORTING_PROFESSIONAL]: "/supporting-professional",
 } as const;
@@ -31,6 +35,8 @@ export const BASE_ROUTES = {
 // Mensajes de estado por tipo de perfil
 export const STATUS_MESSAGES = {
   [PROFILE_TYPES.CLIENT]: "Setting up your client area...",
+  [PROFILE_TYPES.TRANSACTION_COORDINATOR_AGENT]:
+    "Preparing your transaction coordinator dashboard...",
   [PROFILE_TYPES.REAL_ESTATE_AGENT]: "Preparing your agent dashboard...",
   [PROFILE_TYPES.BROKER]: "Setting up your professional workspace...",
   [PROFILE_TYPES.SUPPORTING_PROFESSIONAL]:
@@ -100,16 +106,6 @@ export function getCorrectRoute(
   profileType: string | null | undefined
 ): string {
   return getDashboardRoute(profileType);
-}
-
-/**
- * Verifica si un tipo de perfil es broker o supporting professional
- */
-export function isBrokerType(profileType: string | null | undefined): boolean {
-  return (
-    profileType === PROFILE_TYPES.BROKER ||
-    profileType === PROFILE_TYPES.SUPPORTING_PROFESSIONAL
-  );
 }
 
 /**
