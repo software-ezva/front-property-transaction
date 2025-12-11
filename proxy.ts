@@ -45,6 +45,68 @@ export async function proxy(request: NextRequest) {
         loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
       }
+
+      // Check if there was a backend error during login
+      if (session.user.backendError) {
+        return NextResponse.redirect(
+          new URL("/service-unavailable", request.url)
+        );
+      }
+
+      // If user is on role selection but has no profile, verify if profile exists in backend
+      // This handles the case where backend was down during login but is up now
+      if (
+        request.nextUrl.pathname === "/signup/role-selection" &&
+        !session.user.profile?.profileType
+      ) {
+        try {
+          // Try to get access token from session or tokenSet
+          const accessToken =
+            session.accessToken || (session as any).tokenSet?.accessToken;
+
+          if (accessToken) {
+            const userPayload = {
+              sub: session.user.sub,
+              email: session.user.email,
+              name: session.user.name,
+              firstName: session.user.first_name,
+              lastName: session.user.last_name,
+            };
+
+            const backendUrl = process.env.BACKEND_API_URL;
+            if (backendUrl) {
+              const syncResponse = await fetch(`${backendUrl}/users/sync`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(userPayload),
+              });
+
+              if (syncResponse.ok) {
+                const syncResult = await syncResponse.json();
+                if (syncResult?.profile?.profileType) {
+                  // Profile exists! Redirect to refetch endpoint to update session
+                  return NextResponse.redirect(
+                    new URL("/api/auth/refetch-profile", request.url)
+                  );
+                }
+              } else if (syncResponse.status >= 500) {
+                return NextResponse.redirect(
+                  new URL("/service-unavailable", request.url)
+                );
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error verifying profile in middleware:", error);
+          return NextResponse.redirect(
+            new URL("/service-unavailable", request.url)
+          );
+        }
+      }
+
       const profileType = session.user.profile?.profileType;
 
       // /viewer routes are accessible by any authenticated user (agents, clients, supporting professionals)
@@ -63,9 +125,10 @@ export async function proxy(request: NextRequest) {
           // If the correct route is the same as the current one (e.g. profileType undefined
           // and user is already on /signup/role-selection), allow the request to proceed
           // to avoid redirect loops.
+          // Also allow signup routes ONLY if the user does not have a profile yet.
           if (
             correctRoute === request.nextUrl.pathname ||
-            request.nextUrl.pathname.startsWith("/signup")
+            (request.nextUrl.pathname.startsWith("/signup") && !profileType)
           ) {
             return NextResponse.next();
           }
