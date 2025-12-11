@@ -1,9 +1,10 @@
-
 export const ENDPOINTS = {
   api: {
-    AGENT_PROFILE: "/agents",
+    TRANSACTION_COORDINATOR_AGENT_PROFILE: "/transaction-coordinators-agents/",
+    REAL_ESTATE_AGENT_PROFILE: "/real-estate-agents",
     CLIENT_PROFILE: "/clients",
     TRANSACTIONS: "/transactions",
+    EXPIRING_ITEMS: "/transactions/items/expiring",
     PROPERTIES: "/properties",
     TEMPLATES: "/templates",
     DOCUMENTS: "/documents",
@@ -16,11 +17,18 @@ export const ENDPOINTS = {
       `/${profileType}/me/join-brokerage`,
     REGENERATE_ACCESS_CODE: (brokerageId: string) =>
       `/brokerages/${brokerageId}/regenerate-access-code`,
+    TRANSACTION_PEOPLE: (transactionId: string) =>
+      `/transactions/${transactionId}/people`,
+    TRANSACTION_REGENERATE_ACCESS_CODE: (transactionId: string) =>
+      `/transactions/${transactionId}/regenerate-access-code`,
   },
   internal: {
-    AGENT_PROFILE: "/api/agents",
+    TRANSACTION_COORDINATOR_AGENT_PROFILE:
+      "/api/transaction-coordinators-agents",
+    REAL_ESTATE_AGENT_PROFILE: "/api/real-estate-agents",
     CLIENT_PROFILE: "/api/clients",
     TRANSACTIONS: "/api/transactions",
+    EXPIRING_ITEMS: "/api/transactions/items/expiring",
     PROPERTIES: "/api/properties",
     TEMPLATES: "/api/templates",
     DOCUMENTS: "/api/documents",
@@ -31,6 +39,10 @@ export const ENDPOINTS = {
     JOIN_BROKERAGE: (profileType: string) =>
       `/api/${profileType}/brokerage/join`,
     REGENERATE_ACCESS_CODE: "/api/brokers/brokerage/regenerate-access-code",
+    TRANSACTION_PEOPLE: (transactionId: string) =>
+      `/api/transactions/${transactionId}/people`,
+    TRANSACTION_REGENERATE_ACCESS_CODE: (transactionId: string) =>
+      `/api/transactions/${transactionId}/regenerate-access-code`,
   },
 
   HEALTH_CHECK: "health",

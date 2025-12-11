@@ -2,7 +2,7 @@
 
 import React from "react";
 import DashboardLayout from "@/components/templates/DashboardLayout";
-import { useAgentAuth } from "@/hooks/use-agent-auth";
+import { useTransactionCoordinatorAgentAuth } from "@/hooks/use-transaction-coordinator-agent-auth";
 import { useClientAuth } from "@/hooks/use-client-auth";
 
 interface WithAuthProps {
@@ -23,7 +23,10 @@ export function withAuth<P extends object>(
   userType: "agent" | "client"
 ) {
   const WithAuthComponent = (props: P) => {
-    const authHook = userType === "agent" ? useAgentAuth() : useClientAuth();
+    const authHook =
+      userType === "agent"
+        ? useTransactionCoordinatorAgentAuth()
+        : useClientAuth();
 
     const {
       user,

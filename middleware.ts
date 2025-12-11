@@ -19,11 +19,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   const protectedRoutes = [
-    "/agent",
+    "/transaction-coordinator",
     "/client",
     "/broker",
     "/signup",
-    "/logging-in",
     "/viewer",
   ];
   const isProtectedRoute = protectedRoutes.some((route) =>
@@ -42,15 +41,11 @@ export async function middleware(request: NextRequest) {
       const session = await auth0.getSession(request);
 
       if (!session?.user) {
-        console.log("Usuario no autenticado, redirigiendo al login");
         const loginUrl = new URL("/auth/login", request.url);
         loginUrl.searchParams.set("returnTo", request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
       }
       const profileType = session.user.profile?.profileType;
-
-      console.log("Usuario autenticado-Middleware:", session.user.email);
-      console.log("Tipo de perfil:", profileType);
 
       // /viewer routes are accessible by any authenticated user (agents, clients, supporting professionals)
       // so we skip profile-based access checks for those routes
@@ -64,9 +59,6 @@ export async function middleware(request: NextRequest) {
 
         if (!canAccessRoute(profileType, request.nextUrl.pathname)) {
           const correctRoute = getCorrectRoute(profileType);
-          console.log(
-            `Usuario con perfil ${profileType} intentó acceder a ${request.nextUrl.pathname}, redirigiendo a ${correctRoute}`
-          );
 
           // If the correct route is the same as the current one (e.g. profileType undefined
           // and user is already on /signup/role-selection), allow the request to proceed
@@ -75,9 +67,6 @@ export async function middleware(request: NextRequest) {
             correctRoute === request.nextUrl.pathname ||
             request.nextUrl.pathname.startsWith("/signup")
           ) {
-            console.log(
-              `Ya en la ruta correcta (${request.nextUrl.pathname}), permitiendo acceso (short-circuit)`
-            );
             return NextResponse.next();
           }
 
