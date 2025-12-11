@@ -13,7 +13,7 @@ interface RequestConfig extends RequestInit {
 class APIClient {
   private baseUrl: string;
   private defaultTimeout: number = 10000;
-  private allowedEndpoints: RegExp = /^[\w\-\/]+$/; // Patrón para endpoints válidos
+  private allowedEndpoints: RegExp = /^[\w\-\/\?\=\&]+$/; // Patrón para endpoints válidos
 
   constructor() {
     this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "";
@@ -30,7 +30,7 @@ class APIClient {
     headers["X-Requested-With"] = "XMLHttpRequest";
 
     // Obtener token de Auth0 en el cliente
-    let accessToken = await getAccessToken()
+    let accessToken = await getAccessToken();
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
     }

@@ -70,7 +70,7 @@ export async function apiFetch<T = any>(
     }
 
     const networkError = new ApiError(
-      "Error de conexión. Por favor, intenta nuevamente.",
+      "Failed to connect to the server, please try again later.",
       0,
       error instanceof Error ? error.message : "Unknown error"
     );

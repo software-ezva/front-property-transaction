@@ -13,7 +13,7 @@ interface ServerRequestConfig extends RequestInit {
 class ApiServerClientClass {
   private baseUrl: string;
   private defaultTimeout: number = 10000;
-  private allowedEndpoints: RegExp = /^[\w\-\/]+$/;
+  private allowedEndpoints: RegExp = /^[\w\-\/\?\=\&]+$/;
 
   constructor() {
     this.baseUrl =
@@ -29,9 +29,16 @@ class ApiServerClientClass {
       headers["Content-Type"] = "application/json";
     }
     headers["X-Requested-With"] = "XMLHttpRequest";
-    let accessToken = await auth0.getAccessToken();
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken.token}`;
+    try {
+      let accessToken = await auth0.getAccessToken();
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken.token}`;
+      }
+    } catch (error) {
+      console.warn(
+        "Warning: Could not retrieve access token in ApiServerClient",
+        error
+      );
     }
     return headers;
   }
