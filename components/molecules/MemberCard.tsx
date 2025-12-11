@@ -25,9 +25,27 @@ export function MemberCard({
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   const handleCopyEmail = async (emailToCopy: string) => {
-    await navigator.clipboard.writeText(emailToCopy);
-    setCopiedEmail(emailToCopy);
-    setTimeout(() => setCopiedEmail(null), 2000);
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(emailToCopy);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = emailToCopy;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+        if (!successful) throw new Error("Copy failed");
+      }
+      setCopiedEmail(emailToCopy);
+      setTimeout(() => setCopiedEmail(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy email:", err);
+    }
   };
 
   return (
@@ -45,12 +63,18 @@ export function MemberCard({
           }`}
         >
           <Icon
-            className={`w-8 h-8 ${isEmpty ? "text-muted-foreground/50" : iconColor}`}
+            className={`w-8 h-8 ${
+              isEmpty ? "text-muted-foreground/50" : iconColor
+            }`}
           />
         </div>
         <div className="w-full">
           {badge && (
-            <p className={`text-xs font-medium mb-2 ${isEmpty ? "text-muted-foreground" : "text-tertiary"}`}>
+            <p
+              className={`text-xs font-medium mb-2 ${
+                isEmpty ? "text-muted-foreground" : "text-tertiary"
+              }`}
+            >
               {badge}
             </p>
           )}

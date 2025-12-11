@@ -7,6 +7,7 @@ interface DocumentCardProps {
   document: Document;
   onView?: (document: Document) => void;
   onArchive?: (document: Document) => void;
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -50,6 +51,7 @@ export default function DocumentCard({
   document,
   onView,
   onArchive,
+  readOnly = false,
   className = "",
 }: DocumentCardProps) {
   return (
@@ -84,16 +86,18 @@ export default function DocumentCard({
               <Eye className="w-4 h-4" />
             </Button>
           )}
-          {onArchive && document.status !== DocumentStatus.SIGNED && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onArchive(document)}
-              title="Archive document"
-            >
-              <Archive className="w-4 h-4" />
-            </Button>
-          )}
+          {onArchive &&
+            !readOnly &&
+            document.status !== DocumentStatus.SIGNED && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onArchive(document)}
+                title="Archive document"
+              >
+                <Archive className="w-4 h-4" />
+              </Button>
+            )}
         </div>
       </div>
     </div>
