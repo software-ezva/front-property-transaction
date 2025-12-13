@@ -52,7 +52,6 @@ env:
   - variable: APP_BASE_URL
     value: ${{ secrets.APP_BASE_URL }}
     availability:
-      - BUILD
       - RUNTIME
 
   # 7. Auth0 Scope
