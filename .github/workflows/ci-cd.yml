@@ -42,14 +42,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18' 
-          cache: 'npm'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml # Specify pnpm lock file if using pnpm cache
 
       - name: Install Dependencies
-        run: npm ci
+        # FIX: Changed to 'pnpm install' as requested by the user. 
+        # It is highly recommended to commit 'pnpm-lock.yaml' and use 'pnpm install --frozen-lockfile' 
+        # for deterministic builds when deploying to production.
+        run: pnpm install
 
       # --- 3. Install Firebase CLI ---
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        # Using pnpm to install global packages
+        run: pnpm install -g firebase-tools
 
       # --- 4. Deploy to Firebase App Hosting ---
       - name: Deploy to Firebase App Hosting
