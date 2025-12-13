@@ -50,7 +50,7 @@ env:
 
   # 6. Auth0 Base URL
   - variable: APP_BASE_URL
-    value: ${{ secrets.APP_BASE_URL }}
+    value: https://www.homeconnectus.com
     availability:
       - BUILD
       - RUNTIME
