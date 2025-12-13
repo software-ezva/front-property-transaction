@@ -11,7 +11,7 @@ export interface SyncUserResult {
 }
 
 /**
- * Sincroniza el usuario con el backend y obtiene su perfil
+ * Synchronizes the user with the backend and retrieves their profile
  */
 export async function syncUserWithBackend(
   session: any,
@@ -26,7 +26,7 @@ export async function syncUserWithBackend(
       lastName: session.user.last_name || session.user.family_name,
     };
 
-    // Usar el API client server para hacer la sincronización
+    // Use the server API client to perform synchronization
     const syncResult = await ApiServerClient.post<SyncUserResult>(
       "/users/sync",
       userPayload,
@@ -44,21 +44,37 @@ export async function syncUserWithBackend(
   }
 }
 
+// Helper to get safe values during build
+// If the value is a Firebase placeholder (${{ ... }}) or does not exist, return a dummy value
+const getSafeEnv = (key: string, fallback: string) => {
+  const value = process.env[key];
+  if (!value || value.includes("${{")) {
+    return fallback;
+  }
+  return value;
+};
+
 // Initialize the Auth0 client
 export const auth0 = new Auth0Client({
-  // Options are loaded from environment variables by default
-  // Ensure necessary environment variables are properly set
-  // domain: process.env.AUTH0_DOMAIN,
-  // clientId: process.env.AUTH0_CLIENT_ID,
-  // clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  // Use getSafeEnv to prevent build failure if secrets haven't been injected yet
+  domain: getSafeEnv("AUTH0_DOMAIN", "dummy.us.auth0.com"),
+  clientId: getSafeEnv("AUTH0_CLIENT_ID", "dummy_client_id"),
+  clientSecret: getSafeEnv("AUTH0_CLIENT_SECRET", "dummy_client_secret"),
   // appBaseURL: process.env.APP_BASE_URL,
-  // secret: process.env.AUTH0_SECRET,
+  secret: getSafeEnv(
+    "AUTH0_SECRET",
+    "dummy_secret_32_chars_long_at_least_xxxxxxxx"
+  ),
 
   authorizationParameters: {
     // In v4, the AUTH0_SCOPE and AUTH0_AUDIENCE environment variables for ApiClientSide authorized applications are no longer automatically picked up by the SDK.
     // Instead, we need to provide the values explicitly.
-    scope: process.env.AUTH0_SCOPE,
-    audience: process.env.AUTH0_AUDIENCE,
+    // Fallback to 'openid profile email' if env var is missing during build
+    scope: (() => {
+      const scope = getSafeEnv("AUTH0_SCOPE", "openid profile email");
+      return scope.includes("openid") ? scope : `${scope} openid`;
+    })(),
+    audience: getSafeEnv("AUTH0_AUDIENCE", "dummy_audience"),
   },
   session: {
     rolling: true,
