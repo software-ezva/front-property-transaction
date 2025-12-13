@@ -13,7 +13,7 @@ cp .env.local.example .env.local
 ```
 # URL base de la ApiClientSide incluyendo /v1
 BACKEND_API_URL='http://localhost:5698/api/v1'
-NEXT_PUBLIC_BACKEND_API_URL='http://localhost:5698/api/v1'
+BACKEND_API_URL='http://localhost:5698/api/v1'
 ```
 
 3. Asegúrate de que la ApiClientSide backend esté funcionando en la URL especificada.
