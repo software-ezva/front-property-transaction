@@ -1,6 +1,18 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth0 } from "./lib/auth0";
+import { auth0, syncUserWithBackend } from "./lib/auth0";
+
+const protectedRoutes = [
+  "/transaction-coordinator",
+  "/client",
+  "/broker",
+  "/signup",
+  "/viewer",
+  "/real-estate-agent",
+  "/supporting-professional",
+];
+
+const publicRoutes = ["/"];
 
 export async function proxy(request: NextRequest) {
   // Only run the Auth0 middleware for /auth routes (callbacks, login, logout).
@@ -10,7 +22,6 @@ export async function proxy(request: NextRequest) {
     return await auth0.middleware(request);
   }
 
-  const publicRoutes = ["/"];
   const isPublicRoute = publicRoutes.some(
     (route) => request.nextUrl.pathname === route
   );
@@ -18,13 +29,7 @@ export async function proxy(request: NextRequest) {
   if (isPublicRoute) {
     return NextResponse.next();
   }
-  const protectedRoutes = [
-    "/transaction-coordinator",
-    "/client",
-    "/broker",
-    "/signup",
-    "/viewer",
-  ];
+
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
@@ -65,45 +70,25 @@ export async function proxy(request: NextRequest) {
             session.accessToken || (session as any).tokenSet?.accessToken;
 
           if (accessToken) {
-            const userPayload = {
-              sub: session.user.sub,
-              email: session.user.email,
-              name: session.user.name,
-              firstName: session.user.first_name,
-              lastName: session.user.last_name,
-            };
-
-            const backendUrl = process.env.BACKEND_API_URL;
-            if (backendUrl) {
-              const syncResponse = await fetch(`${backendUrl}/users/sync`, {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(userPayload),
-              });
-
-              if (syncResponse.ok) {
-                const syncResult = await syncResponse.json();
-                if (syncResult?.profile?.profileType) {
-                  // Profile exists! Redirect to refetch endpoint to update session
-                  return NextResponse.redirect(
-                    new URL("/api/auth/refetch-profile", request.url)
-                  );
-                }
-              } else if (syncResponse.status >= 500) {
+            try {
+              const syncResult = await syncUserWithBackend(
+                session,
+                accessToken
+              );
+              if (syncResult?.profile?.profileType) {
+                // Profile exists! Redirect to refetch endpoint to update session
                 return NextResponse.redirect(
-                  new URL("/service-unavailable", request.url)
+                  new URL("/api/auth/refetch-profile", request.url)
                 );
               }
+            } catch (syncError) {
+              // Silent fail in middleware, let the user continue to role selection
+              // or if it's a critical error, we could redirect to service-unavailable
+              // But since we already checked backendError above, this is an optimistic check
             }
           }
         } catch (error) {
           console.error("Error verifying profile in middleware:", error);
-          return NextResponse.redirect(
-            new URL("/service-unavailable", request.url)
-          );
         }
       }
 

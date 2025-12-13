@@ -10,6 +10,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL("/api/auth/login", req.url));
     }
 
+    // Check if there was a backend error during login (e.g. connection refused)
+    if (session.user.backendError) {
+      return NextResponse.redirect(new URL("/service-unavailable", req.url));
+    }
+
     // The profile is populated in lib/auth0.js -> beforeSessionSaved
     const profileType = session.user.profile?.profileType;
 

@@ -1,5 +1,49 @@
 import { Auth0Client } from "@auth0/nextjs-auth0/server";
 import { NextResponse } from "next/server";
+import { ApiServerClient } from "./api-server";
+
+export interface SyncUserResult {
+  profile?: {
+    profileType?: string;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
+/**
+ * Sincroniza el usuario con el backend y obtiene su perfil
+ */
+export async function syncUserWithBackend(
+  session: any,
+  accessToken: string
+): Promise<SyncUserResult> {
+  try {
+    const userPayload = {
+      sub: session.user.sub,
+      email: session.user.email,
+      name: session.user.name,
+      firstName: session.user.first_name || session.user.given_name,
+      lastName: session.user.last_name || session.user.family_name,
+    };
+
+    // Usar el API client server para hacer la sincronización
+    const syncResult = await ApiServerClient.post<SyncUserResult>(
+      "/users/sync",
+      userPayload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return syncResult;
+  } catch (error) {
+    console.error("Error syncing user with backend:", error);
+    throw error;
+  }
+}
+
 // Initialize the Auth0 client
 export const auth0 = new Auth0Client({
   // Options are loaded from environment variables by default
@@ -25,7 +69,6 @@ export const auth0 = new Auth0Client({
       sameSite: "lax",
       name: "prtra_session",
     },
-    storeAccessToken: true,
   },
 
   // Synchronize user with backend after login/registration
@@ -34,30 +77,8 @@ export const auth0 = new Auth0Client({
       const accessToken = session.tokenSet?.accessToken;
 
       if (accessToken) {
-        // Prepare user data for backend synchronization
-        const userPayload = {
-          sub: session.user.sub,
-          email: session.user.email,
-          name: session.user.name,
-          firstName: session.user.first_name,
-          lastName: session.user.last_name,
-        };
-
-        // Synchronize user with backend
-        const syncResponse = await fetch(
-          `${process.env.BACKEND_API_URL}/users/sync`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(userPayload),
-          }
-        );
-
-        if (syncResponse.ok) {
-          const syncResult = await syncResponse.json();
+        try {
+          const syncResult = await syncUserWithBackend(session, accessToken);
 
           // Check for profileType in the response
           const profile = syncResult?.profile;
@@ -72,16 +93,17 @@ export const auth0 = new Auth0Client({
           const { getDashboardRoute } = await import("./profile-utils");
           const redirectUrl = getDashboardRoute(profileType);
           session.user.redirectTo = redirectUrl;
-        } else {
-          const errorText = await syncResponse.text();
-          console.error(
-            "❌ Error synchronizing user:",
-            syncResponse.status,
-            syncResponse.statusText,
-            errorText
-          );
-          // If server error, mark as backend error
-          if (syncResponse.status >= 500) {
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+          console.error("❌ Error synchronizing user:", errorMessage);
+          // If server error or network error, mark as backend error
+          // "fetch failed" usually means network error (ECONNREFUSED, etc)
+          if (
+            error instanceof Error &&
+            (error.message.includes("500") ||
+              error.message.includes("fetch failed"))
+          ) {
             session.user.backendError = true;
           }
         }

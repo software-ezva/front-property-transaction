@@ -16,7 +16,7 @@ class APIClient {
   private allowedEndpoints: RegExp = /^[\w\-\/\?\=\&]+$/; // Patrón para endpoints válidos
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "";
+    this.baseUrl = process.env.BACKEND_API_URL || "";
   }
 
   private async getHeaders(isFormData = false): Promise<HeadersInit> {

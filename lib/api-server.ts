@@ -96,9 +96,22 @@ class ApiServerClientClass {
     if (!this.allowedEndpoints.test(endpoint)) {
       throw new Error("Invalid endpoint format");
     }
-    const { timeout = this.defaultTimeout, ...restOptions } = options;
+    const {
+      timeout = this.defaultTimeout,
+      headers: customHeaders,
+      ...restOptions
+    } = options;
     const isFormData = data instanceof FormData;
-    const headers = await this.getHeaders(isFormData);
+    const baseHeaders = await this.getHeaders(isFormData);
+
+    // Merge base headers with custom headers
+    // We need to handle different types of HeadersInit (Headers, string[][], Record<string, string>)
+    // For simplicity, assuming Record<string, string> or compatible object for now as is common in fetch wrappers
+    const headers = {
+      ...baseHeaders,
+      ...((customHeaders as Record<string, string>) || {}),
+    };
+
     const url = `${this.baseUrl}${endpoint}`;
     console.log(`[API] Request: ${method} ${url}`);
     const response = await this.fetchWithTimeout(

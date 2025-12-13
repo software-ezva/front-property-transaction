@@ -1,4 +1,4 @@
-import { auth0 } from "@/lib/auth0";
+import { auth0, syncUserWithBackend } from "@/lib/auth0";
 import { getDashboardRoute } from "@/lib/profile-utils";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -19,52 +19,57 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/auth/login", request.url));
     }
 
-    // Prepare user data for backend synchronization
-    const userPayload = {
-      sub: session.user.sub,
-      email: session.user.email,
-      name: session.user.name,
-      firstName: session.user.first_name,
-      lastName: session.user.last_name,
-    };
+    try {
+      // Synchronize user with backend using the centralized function
+      const syncResult = await syncUserWithBackend(session, accessToken);
 
-    // Synchronize user with backend
-    const syncResponse = await fetch(
-      `${process.env.BACKEND_API_URL}/users/sync`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userPayload),
-      }
-    );
+      // If we are here, the backend is ONLINE.
+      // We need to update the session to clear any previous backendError
+      // and update the profile if we got one.
 
-    if (syncResponse.ok) {
-      const syncResult = await syncResponse.json();
       const profile = syncResult?.profile;
       const profileType = profile?.profileType;
 
+      const updatedUser = { ...session.user };
+
+      // Clear backend error flag since sync succeeded
+      if ("backendError" in updatedUser) {
+        delete updatedUser.backendError;
+      }
+
+      // Update profile if found
       if (profile && profileType) {
-        // Update the session with the profile and clear backend error
-        const updatedUser = { ...session.user, profile };
-        if ("backendError" in updatedUser) {
-          delete updatedUser.backendError;
-        }
+        updatedUser.profile = profile;
+      }
 
-        await auth0.updateSession({
-          ...session,
-          user: updatedUser,
-        });
+      // Persist changes to session
+      await auth0.updateSession({
+        ...session,
+        user: updatedUser,
+      });
 
+      // Determine redirect destination
+      if (profile && profileType) {
         const redirectUrl = getDashboardRoute(profileType);
         return NextResponse.redirect(new URL(redirectUrl, request.url));
+      } else {
+        // Backend online, but no profile -> Role Selection
+        return NextResponse.redirect(
+          new URL("/signup/role-selection", request.url)
+        );
       }
+    } catch (syncError) {
+      const errorMessage =
+        syncError instanceof Error ? syncError.message : "Unknown error";
+      console.error("Error syncing user in refetch-profile:", errorMessage);
+
+      // Backend still OFFLINE or error occurred -> Service Unavailable
+      return NextResponse.redirect(
+        new URL("/service-unavailable", request.url)
+      );
     }
 
-    // If no profile found or sync failed, redirect to role selection
-    // But if we are here, it means middleware detected a profile, so this is a fallback
+    // Fallback (should not be reached due to returns above)
     return NextResponse.redirect(
       new URL("/signup/role-selection", request.url)
     );
