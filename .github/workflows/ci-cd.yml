@@ -67,7 +67,4 @@ jobs:
 
           # The firebase deploy command reads apphosting.yaml.
           # GCP secrets and custom SA are automatically managed by Firebase/Cloud Run.
-          firebase deploy --only apphosting \
-            --project ${{ env.PROJECT_ID }} \
-            --region ${{ env.REGION }} \
-            --app-hosting-backend-id ${{ env.FIREBASE_BACKEND_ID }}
+          firebase deploy --only apphosting --project ${{ env.PROJECT_ID }}
