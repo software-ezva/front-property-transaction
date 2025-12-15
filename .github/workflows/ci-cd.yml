@@ -143,3 +143,13 @@ jobs:
             --vpc-connector ${{ env.VPC_CONNECTOR_NAME }} \
             --vpc-egress all-traffic \
             --format json
+
+      - name: Ensure Public Invoker Role (Fix Warning)
+        if: success() # Ejecutar si el deploy fue exitoso (a pesar de la advertencia)
+        run: |
+          echo "Explicitly binding 'roles/run.invoker' to 'allUsers' to ensure public access..."
+          gcloud run services add-iam-policy-binding ${{ env.SERVICE_NAME }} \
+            --member="allUsers" \
+            --role="roles/run.invoker" \
+            --region="${{ env.REGION }}" \
+            --project="${{ env.PROJECT_ID }}"
