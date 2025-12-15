@@ -19,6 +19,9 @@ env:
   # --- 3. RUNTIME IDENTITY (Cloud Run) ---
   RUNTIME_SERVICE_ACCOUNT: prop-coord-fe-runtime-sa@property-transaction.iam.gserviceaccount.com
 
+  # --- 4. VPC_CONNECTOR_NAME ---
+  VPC_CONNECTOR_NAME: conn-app-backend
+
 jobs:
   # ========================================================================
   # JOB 1: CI (Continuous Integration)
@@ -127,7 +130,15 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          flags: "--service-account=${{ env.RUNTIME_SERVICE_ACCOUNT }} --allow-unauthenticated --port=3000"
+          flags: |
+            --service-account=${{ env.RUNTIME_SERVICE_ACCOUNT }}
+            --allow-unauthenticated
+            --port=3000
+            # Habilita el tráfico externo para resolver el 403 Forbidden
+            --ingress=all 
+            # Conecta el Cloud Run a la VPC usando el conector correcto
+            --vpc-connector=${{ env.VPC_CONNECTOR_NAME }}
+            --vpc-egress=all-traffic
           env_vars: |
             NODE_ENV=production
           secrets: |
