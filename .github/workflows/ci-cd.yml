@@ -124,23 +124,27 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
-      - name: Deploy to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ env.SERVICE_NAME }}
-          region: ${{ env.REGION }}
-          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          flags: "--service-account=${{ env.RUNTIME_SERVICE_ACCOUNT }} --allow-unauthenticated --port=3000 --vpc-connector=${{ env.VPC_CONNECTOR_NAME }} --vpc-egress=all-traffic"
-          env_vars: |
-            NODE_ENV=production
-          secrets: |
-            AUTH0_SECRET=AUTH0_SECRET:latest
-            AUTH0_CLIENT_SECRET=AUTH0_CLIENT_SECRET:latest
-            APP_BASE_URL=APP_BASE_URL:latest
-            AUTH0_AUDIENCE=AUTH0_AUDIENCE:latest
-            AUTH0_SCOPE=AUTH0_SCOPE:latest
-            AUTH0_CLIENT_ID=AUTH0_CLIENT_ID:latest
-            AUTH0_DOMAIN=AUTH0_DOMAIN:latest
-            BACKEND_API_URL=BACKEND_API_URL:latest
-            AUTH0_COOKIE_SAME_SITE=AUTH0_COOKIE_SAME_SITE:latest
-            AUTH0_COOKIE_SECURE=AUTH0_COOKIE_SECURE:latest
+      # REEMPLAZO: Ejecuta el comando gcloud run deploy directamente (más robusto)
+      - name: Deploy to Cloud Run (Native gcloud Command)
+        run: |
+          # Define las variables de entorno para --update-env-vars
+          ENV_VARS="NODE_ENV=production"
+
+          # Define los secretos para --update-secrets
+          SECRETS="AUTH0_SECRET=frontend_auth0_secret:latest,AUTH0_CLIENT_SECRET=frontend_auth0_client_secret:latest,APP_BASE_URL=frontend_app_base_url:latest,AUTH0_AUDIENCE=frontend_auth0_audience:latest,AUTH0_SCOPE=frontend_auth0_scope:latest,AUTH0_CLIENT_ID=frontend_auth0_client_id:latest,AUTH0_DOMAIN=frontend_auth0_domain:latest,BACKEND_API_URL=frontend_backend_api_url:latest,AUTH0_COOKIE_SAME_SITE=frontend_auth0_cookie_same_site:latest,AUTH0_COOKIE_SECURE=frontend_auth0_cookie_secure:latest"
+          
+          # Comando nativo de gcloud run deploy
+          # El flag --allow-unauthenticated ahora debería aplicar la política IAM correctamente.
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }} \
+            --service-account ${{ env.RUNTIME_SERVICE_ACCOUNT }} \
+            --port 3000 \
+            --update-env-vars ${ENV_VARS} \
+            --update-secrets ${SECRETS} \
+            --allow-unauthenticated \
+            --ingress all \
+            --vpc-connector ${{ env.VPC_CONNECTOR_NAME }} \
+            --vpc-egress all-traffic \
+            --format json
