@@ -134,9 +134,7 @@ jobs:
             --service-account=${{ env.RUNTIME_SERVICE_ACCOUNT }}
             --allow-unauthenticated
             --port=3000
-            # Habilita el tráfico externo para resolver el 403 Forbidden
             --ingress=all 
-            # Conecta el Cloud Run a la VPC usando el conector correcto
             --vpc-connector=${{ env.VPC_CONNECTOR_NAME }}
             --vpc-egress=all-traffic
           env_vars: |
