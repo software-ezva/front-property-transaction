@@ -141,7 +141,7 @@ jobs:
             --allow-unauthenticated \
             --ingress all \
             --vpc-connector ${{ env.VPC_CONNECTOR_NAME }} \
-            --vpc-egress all-traffic \
+            --vpc-egress private-ranges-only \
             --format json
 
       - name: Ensure Public Invoker Role (Fix Warning)
