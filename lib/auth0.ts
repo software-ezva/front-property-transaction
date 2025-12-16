@@ -27,6 +27,32 @@ export async function syncUserWithBackend(
     };
 
     // Use the server API client to perform synchronization
+    console.log("[DEBUG] Syncing user with backend...");
+    console.log("[DEBUG] Backend URL:", process.env.BACKEND_API_URL);
+    console.log(
+      "[DEBUG] Access Token (first 10 chars):",
+      accessToken.substring(0, 10) + "..."
+    );
+    console.log("[DEBUG] Auth0 Audience:", process.env.AUTH0_AUDIENCE);
+
+    // DEBUG: Log environment variables at runtime
+    console.log("--- [DEBUG] RUNTIME ENVIRONMENT VARIABLES ---");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("APP_BASE_URL:", process.env.APP_BASE_URL);
+    console.log("BACKEND_API_URL:", process.env.BACKEND_API_URL);
+    console.log("AUTH0_DOMAIN:", process.env.AUTH0_DOMAIN);
+    console.log("AUTH0_CLIENT_ID:", process.env.AUTH0_CLIENT_ID);
+    console.log("AUTH0_SECRET (Exists?):", !!process.env.AUTH0_SECRET);
+    console.log(
+      "AUTH0_CLIENT_SECRET (Exists?):",
+      !!process.env.AUTH0_CLIENT_SECRET
+    );
+    console.log("AUTH0_AUDIENCE:", process.env.AUTH0_AUDIENCE);
+    console.log("AUTH0_SCOPE:", process.env.AUTH0_SCOPE);
+    console.log("AUTH0_COOKIE_SAME_SITE:", process.env.AUTH0_COOKIE_SAME_SITE);
+    console.log("AUTH0_COOKIE_SECURE:", process.env.AUTH0_COOKIE_SECURE);
+    console.log("---------------------------------------------");
+
     const syncResult = await ApiServerClient.post<SyncUserResult>(
       "/users/sync",
       userPayload,
