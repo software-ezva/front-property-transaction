@@ -5,9 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     const session = await auth0.getSession();
+    const baseUrl = process.env.APP_BASE_URL || request.url;
 
     if (!session || !session.user) {
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+      return NextResponse.redirect(new URL("/auth/login", baseUrl));
     }
 
     // Try to get access token from session or tokenSet
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     if (!accessToken) {
       // If we don't have an access token, we might need to re-login
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+      return NextResponse.redirect(new URL("/auth/login", baseUrl));
     }
 
     try {
@@ -51,11 +52,11 @@ export async function GET(request: NextRequest) {
       // Determine redirect destination
       if (profile && profileType) {
         const redirectUrl = getDashboardRoute(profileType);
-        return NextResponse.redirect(new URL(redirectUrl, request.url));
+        return NextResponse.redirect(new URL(redirectUrl, baseUrl));
       } else {
         // Backend online, but no profile -> Role Selection
         return NextResponse.redirect(
-          new URL("/signup/role-selection", request.url)
+          new URL("/signup/role-selection", baseUrl)
         );
       }
     } catch (syncError) {
@@ -64,17 +65,13 @@ export async function GET(request: NextRequest) {
       console.error("Error syncing user in refetch-profile:", errorMessage);
 
       // Backend still OFFLINE or error occurred -> Service Unavailable
-      return NextResponse.redirect(
-        new URL("/service-unavailable", request.url)
-      );
+      return NextResponse.redirect(new URL("/service-unavailable", baseUrl));
     }
 
     // Fallback (should not be reached due to returns above)
-    return NextResponse.redirect(
-      new URL("/signup/role-selection", request.url)
-    );
+    return NextResponse.redirect(new URL("/signup/role-selection", baseUrl));
   } catch (error) {
     console.error("Error refetching profile:", error);
-    return NextResponse.redirect(new URL("/service-unavailable", request.url));
+    return NextResponse.redirect(new URL("/service-unavailable", baseUrl));
   }
 }
