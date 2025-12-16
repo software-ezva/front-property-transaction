@@ -39,7 +39,7 @@ pnpm install
 pnpm dev
 ```
 
-## Producción
+## Production
 
 ```bash
 pnpm build
