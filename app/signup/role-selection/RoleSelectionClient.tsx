@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Building2,
   User,
@@ -19,7 +18,6 @@ import { useUser } from "@auth0/nextjs-auth0";
 import { ENDPOINTS } from "@/lib/constants";
 import { apiClient } from "@/lib/api-internal";
 import { ProfessionalType } from "@/types/professionals";
-import { getDashboardRoute, PROFILE_TYPES } from "@/lib/profile-utils";
 import { cn } from "@/lib/utils";
 import LoadingState from "@/components/molecules/LoadingState";
 
@@ -43,7 +41,6 @@ interface FormData {
 }
 
 export default function RoleSelectionClient() {
-  const router = useRouter();
   const { user, isLoading } = useUser();
   const [step, setStep] = useState<"role" | "details">("role");
   const [formData, setFormData] = useState<FormData>({
@@ -216,13 +213,9 @@ export default function RoleSelectionClient() {
       // Always use the internal ApiClientSide route for both roles
       const res = await apiClient.post(endpoint, payload);
 
-      // Redirect to dashboard according to role using centralized utility
-      const profileType =
-        formData.role === "transaction_coordinator_agent"
-          ? PROFILE_TYPES.TRANSACTION_COORDINATOR_AGENT
-          : formData.role;
-      const dashboardRoute = getDashboardRoute(profileType);
-      router.push(dashboardRoute);
+      // Redirect to refetch-profile to update session and redirect to dashboard
+      // We use window.location.href to ensure a full page reload and proper session update
+      window.location.href = "/api/auth/refetch-profile";
     } catch (error) {
       // Error se muestra automáticamente como toast
       console.error("Submission error:", error);
