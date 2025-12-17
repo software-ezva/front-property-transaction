@@ -39,10 +39,12 @@ export default function AgentDashboard() {
           <h3 className="text-lg font-semibold text-foreground mb-2">
             New Property
           </h3>
-          <p className="text-muted-foreground text-sm mb-4">
-            Add a new property
-          </p>
-          <Button className="w-full">Add Property</Button>
+
+          <Link href="/transaction-coordinator/properties/create">
+            <Button variant="primary" className="w-full">
+              Add property
+            </Button>
+          </Link>
         </div>
 
         <div className="bg-card rounded-lg p-6 border border-border text-center hover:shadow-md transition-shadow">
@@ -50,12 +52,10 @@ export default function AgentDashboard() {
           <h3 className="text-lg font-semibold text-foreground mb-2">
             Create Transaction
           </h3>
-          <p className="text-muted-foreground text-sm mb-4">
-            Add a new transaction
-          </p>
+
           <Link href="/transaction-coordinator/transactions/create">
             <Button variant="secondary" className="w-full">
-              Add Transaction
+              Add transaction
             </Button>
           </Link>
         </div>
